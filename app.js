@@ -408,6 +408,7 @@ function saveRoast() {
             if (Storage.set('roasts', roasts)) {
                 alert('✅ Roast updated successfully!');
                 clearForm();
+                populateBeanFilter(); // Update filter list
                 switchTab('history');
                 loadRoastHistory();
             }
@@ -427,6 +428,7 @@ function saveRoast() {
         if (Storage.set('roasts', roasts)) {
             alert(successMessage);
             clearForm();
+            populateBeanFilter(); // Update filter list
             switchTab('history');
             loadRoastHistory();
         }
@@ -700,25 +702,39 @@ function cancelEdit() {
     }
 }
 
-// Load roast history (FIXED - no array mutation)
-function loadRoastHistory() {
+// Load roast history (FIXED - no array mutation) with optional filter
+function loadRoastHistory(filterBean = null) {
     const roasts = Storage.get('roasts', []);
     const listContainer = document.getElementById('roastList');
     
     if (roasts.length === 0) {
         listContainer.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No saved roasts</p>';
+        updateFilterInfo(0, 0);
         return;
     }
 
     // Create a copy and reverse it to show newest first (FIXED)
-    const sortedRoasts = [...roasts].reverse();
+    let sortedRoasts = [...roasts].reverse();
+    
+    // Apply filter if specified
+    if (filterBean) {
+        sortedRoasts = sortedRoasts.filter(r => r.beanName === filterBean);
+    }
+    
+    // Update filter info
+    updateFilterInfo(sortedRoasts.length, roasts.length);
+    
+    if (sortedRoasts.length === 0) {
+        listContainer.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">לא נמצאו קליות מסוג זה</p>';
+        return;
+    }
     
     listContainer.innerHTML = sortedRoasts.map(roast => {
         let displayDate;
         if (roast.date && roast.date.length === 10) {
-            displayDate = new Date(roast.date + 'T00:00:00').toLocaleDateString('en-US');
+            displayDate = new Date(roast.date + 'T00:00:00').toLocaleDateString('en-GB');
         } else {
-            displayDate = new Date(roast.date).toLocaleDateString('en-US');
+            displayDate = new Date(roast.date).toLocaleDateString('en-GB');
         }
         
         const saveTime = roast.timestamp ? 
@@ -759,13 +775,73 @@ function loadRoastHistory() {
     }).join('');
 }
 
+// Populate bean filter dropdown with unique bean names
+function populateBeanFilter() {
+    const roasts = Storage.get('roasts', []);
+    const filterSelect = document.getElementById('beanFilter');
+    
+    if (!filterSelect) return;
+    
+    // Get unique bean names
+    const uniqueBeans = [...new Set(roasts.map(r => r.beanName))].sort();
+    
+    // Clear existing options except "All"
+    filterSelect.innerHTML = '<option value="">כל הפולים</option>';
+    
+    // Add bean options
+    uniqueBeans.forEach(bean => {
+        const option = document.createElement('option');
+        option.value = bean;
+        option.textContent = bean;
+        filterSelect.appendChild(option);
+    });
+}
+
+// Filter roasts by selected bean
+function filterRoastsByBean() {
+    const filterSelect = document.getElementById('beanFilter');
+    const selectedBean = filterSelect.value;
+    
+    if (selectedBean) {
+        loadRoastHistory(selectedBean);
+    } else {
+        loadRoastHistory();
+    }
+}
+
+// Reset bean filter
+function resetBeanFilter() {
+    const filterSelect = document.getElementById('beanFilter');
+    if (filterSelect) {
+        filterSelect.value = '';
+        loadRoastHistory();
+    }
+}
+
+// Update filter info display
+function updateFilterInfo(showing, total) {
+    const infoElement = document.getElementById('filterInfo');
+    if (!infoElement) return;
+    
+    if (showing === total) {
+        infoElement.textContent = `מציג ${total} קליות`;
+        infoElement.classList.remove('active');
+    } else {
+        infoElement.textContent = `מציג ${showing} מתוך ${total} קליות`;
+        infoElement.classList.add('active');
+    }
+}
+
 // Delete roast
 function deleteRoast(id) {
     if (confirm('Are you sure you want to delete this roast?')) {
         let roasts = Storage.get('roasts', []);
         roasts = roasts.filter(r => r.id !== id);
         if (Storage.set('roasts', roasts)) {
-            loadRoastHistory();
+            populateBeanFilter(); // Update filter list
+            const filterSelect = document.getElementById('beanFilter');
+            const currentFilter = filterSelect ? filterSelect.value : '';
+            loadRoastHistory(currentFilter || null);
         }
     }
 }
@@ -774,6 +850,7 @@ function deleteRoast(id) {
 function clearAllData() {
     if (confirm('Are you sure you want to delete all history? This action cannot be undone!')) {
         if (Storage.remove('roasts')) {
+            populateBeanFilter(); // Update filter list
             loadRoastHistory();
             alert('All data has been cleared');
         }
@@ -801,8 +878,8 @@ function exportToExcel() {
         
         return {
             'Roast Date': roastDate,
-            'Saved Date': r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-US') : new Date(r.date).toLocaleDateString('en-US'),
-            'Saved Time': r.timestamp ? new Date(r.timestamp).toLocaleTimeString('en-US') : new Date(r.date).toLocaleTimeString('en-US'),
+            'Saved Date': r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-GB') : new Date(r.date).toLocaleDateString('en-GB'),
+            'Saved Time': r.timestamp ? new Date(r.timestamp).toLocaleTimeString('en-GB') : new Date(r.date).toLocaleTimeString('en-GB'),
             'Bean Name': r.beanName,
             'Env Temp (°C)': r.envTemp,
             'Charge Temp (°C)': r.chargeTemp,
@@ -1189,6 +1266,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load history
     loadRoastHistory();
+    
+    // Populate bean filter
+    populateBeanFilter();
     
     // Initialize time picker
     initTimePicker();
