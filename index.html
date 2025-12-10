@@ -411,6 +411,176 @@
         .time-input {
             font-family: monospace;
             letter-spacing: 2px;
+            cursor: pointer;
+        }
+        
+        .time-input:not([readonly]) {
+            background: white url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="%23666" d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm1 12H7V7h2v5zm0-6H7V4h2v2z"/></svg>') no-repeat;
+            background-position: 98% center;
+            background-size: 18px;
+        }
+
+        /* Time Picker Modal */
+        .time-picker-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.2s;
+        }
+
+        .time-picker-overlay.show {
+            display: flex;
+        }
+
+        .time-picker-modal {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .time-picker-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .time-picker-wheels {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            justify-content: center;
+            align-items: center;
+            direction: ltr;
+        }
+
+        .time-picker-wheel {
+            position: relative;
+            height: 200px;
+            width: 80px;
+            overflow: hidden;
+        }
+
+        .time-picker-wheel-inner {
+            position: relative;
+            height: 100%;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .time-picker-wheel-inner::-webkit-scrollbar {
+            display: none;
+        }
+
+        .time-picker-item {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 500;
+            color: #999;
+            scroll-snap-align: center;
+            transition: all 0.2s;
+        }
+
+        .time-picker-item.selected {
+            color: #667eea;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .time-picker-highlight {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 40px;
+            transform: translateY(-50%);
+            background: rgba(102, 126, 234, 0.1);
+            border-top: 2px solid #667eea;
+            border-bottom: 2px solid #667eea;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .time-picker-label {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .time-picker-separator {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            padding: 0 10px;
+            align-self: center;
+            margin-bottom: 20px;
+        }
+
+        .time-picker-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px 20px;
+        }
+
+        .time-picker-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-picker-btn-cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .time-picker-btn-cancel:active {
+            background: #e0e0e0;
+        }
+
+        .time-picker-btn-ok {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .time-picker-btn-ok:active {
+            transform: scale(0.98);
         }
 
         @keyframes fadeIn {
@@ -667,6 +837,40 @@
                     <input type="text" id="newBeanInput" placeholder="הכנס שם פול..." style="flex: 1;">
                     <button class="small-btn btn-add-small" onclick="addBean()" style="width: auto; padding: 10px 20px;">הוסף</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Picker Modal -->
+    <div id="timePickerOverlay" class="time-picker-overlay">
+        <div class="time-picker-modal">
+            <div class="time-picker-header">
+                <div id="timePickerTitle">בחר זמן</div>
+            </div>
+            
+            <div class="time-picker-wheels">
+                <div style="text-align: center;">
+                    <div class="time-picker-wheel">
+                        <div class="time-picker-highlight"></div>
+                        <div class="time-picker-wheel-inner" id="minutesWheel"></div>
+                    </div>
+                    <div class="time-picker-label">דקות</div>
+                </div>
+                
+                <div class="time-picker-separator">:</div>
+                
+                <div style="text-align: center;">
+                    <div class="time-picker-wheel">
+                        <div class="time-picker-highlight"></div>
+                        <div class="time-picker-wheel-inner" id="secondsWheel"></div>
+                    </div>
+                    <div class="time-picker-label">שניות</div>
+                </div>
+            </div>
+            
+            <div class="time-picker-buttons">
+                <button class="time-picker-btn time-picker-btn-cancel" onclick="closeTimePicker()">ביטול</button>
+                <button class="time-picker-btn time-picker-btn-ok" onclick="confirmTimePicker()">אישור</button>
             </div>
         </div>
     </div>
