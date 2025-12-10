@@ -2,7 +2,7 @@
   "name": "Coffee Roaster Tracker - מעקב קליות קפה",
   "short_name": "Coffee Roaster",
   "description": "אפליקציה מקצועית לתיעוד ומעקב אחר קליות קפה",
-  "start_url": "/",
+  "start_url": "/coffee-roaster/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#667eea",
