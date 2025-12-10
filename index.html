@@ -583,6 +583,42 @@
             transform: scale(0.98);
         }
 
+        /* Filter Section */
+        .filter-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bean-filter-select {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .bean-filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .filter-info {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 0;
+        }
+
+        .filter-info.active {
+            color: #667eea;
+            font-weight: 600;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -809,6 +845,18 @@
 
         <div id="historyTab" class="tab-content">
             <div class="card">
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">🔍 סנן לפי סוג פול:</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <select id="beanFilter" class="bean-filter-select" onchange="filterRoastsByBean()">
+                            <option value="">כל הפולים</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="resetBeanFilter()" style="padding: 10px 20px; white-space: nowrap;">הכל</button>
+                    </div>
+                    <div id="filterInfo" class="filter-info"></div>
+                </div>
+                
                 <button class="btn btn-secondary" onclick="exportToExcel()">📊 ייצא לאקסל</button>
                 <button class="btn btn-danger" onclick="clearAllData()">🗑️ נקה היסטוריה</button>
                 
