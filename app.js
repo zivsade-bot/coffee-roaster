@@ -947,6 +947,7 @@ function switchTab(tab) {
     } else if (tab === 'blends') {
         tabs[2].classList.add('active');
         document.getElementById('blendsTab').classList.add('active');
+        populateBlendFilter(); // Populate filter dropdown
         loadBlendsList();
     }
 }
@@ -1446,6 +1447,7 @@ function saveBlend() {
             if (saveBlends(blends)) {
                 alert('✅ התערובת עודכנה בהצלחה!');
                 closeBlendModal();
+                populateBlendFilter();
                 loadBlendsList();
             }
         }
@@ -1458,6 +1460,7 @@ function saveBlend() {
         if (saveBlends(blends)) {
             alert('✅ התערובת נשמרה בהצלחה!');
             closeBlendModal();
+            populateBlendFilter();
             loadBlendsList();
         }
     }
@@ -1515,6 +1518,7 @@ function duplicateBlend(id) {
     
     if (saveBlends(blends)) {
         alert('✅ התערובת שוכפלה בהצלחה!');
+        populateBlendFilter();
         loadBlendsList();
     }
 }
@@ -1530,22 +1534,39 @@ function deleteBlend(id) {
     
     if (saveBlends(blends)) {
         alert('✅ התערובת נמחקה');
-        loadBlendsList();
+        populateBlendFilter();
+        const filterSelect = document.getElementById('blendFilter');
+        const currentFilter = filterSelect ? filterSelect.value : '';
+        loadBlendsList(currentFilter || null);
     }
 }
 
-// Load and display blends list
-function loadBlendsList() {
+// Load and display blends list with optional filter
+function loadBlendsList(filterName = null) {
     const blends = loadBlends();
     const container = document.getElementById('blendsList');
     
     if (blends.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#999; padding:40px;">אין תערובות שמורות עדיין<br>לחץ על "תערובת חדשה" ליצירת התערובת הראשונה! ☕</p>';
+        updateBlendFilterInfo(0, 0);
         return;
     }
     
     // Sort by newest first
-    const sortedBlends = [...blends].reverse();
+    let sortedBlends = [...blends].reverse();
+    
+    // Apply filter if specified
+    if (filterName) {
+        sortedBlends = sortedBlends.filter(b => b.name === filterName);
+    }
+    
+    // Update filter info
+    updateBlendFilterInfo(sortedBlends.length, blends.length);
+    
+    if (sortedBlends.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#999; padding:40px;">לא נמצאו תערובות מסוג זה</p>';
+        return;
+    }
     
     container.innerHTML = sortedBlends.map(blend => {
         const componentsHtml = blend.components
@@ -1571,6 +1592,63 @@ function loadBlendsList() {
             </div>
         `;
     }).join('');
+}
+
+// Populate blend filter dropdown with unique blend names
+function populateBlendFilter() {
+    const blends = loadBlends();
+    const filterSelect = document.getElementById('blendFilter');
+    
+    if (!filterSelect) return;
+    
+    // Get unique blend names (sorted alphabetically)
+    const uniqueNames = [...new Set(blends.map(b => b.name))].sort();
+    
+    // Clear existing options except "All"
+    filterSelect.innerHTML = '<option value="">כל התערובות</option>';
+    
+    // Add blend options
+    uniqueNames.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        filterSelect.appendChild(option);
+    });
+}
+
+// Filter blends by selected name
+function filterBlendsByName() {
+    const filterSelect = document.getElementById('blendFilter');
+    const selectedName = filterSelect.value;
+    
+    if (selectedName) {
+        loadBlendsList(selectedName);
+    } else {
+        loadBlendsList();
+    }
+}
+
+// Reset blend filter
+function resetBlendFilter() {
+    const filterSelect = document.getElementById('blendFilter');
+    if (filterSelect) {
+        filterSelect.value = '';
+        loadBlendsList();
+    }
+}
+
+// Update blend filter info display
+function updateBlendFilterInfo(showing, total) {
+    const infoElement = document.getElementById('blendFilterInfo');
+    if (!infoElement) return;
+    
+    if (showing === total) {
+        infoElement.textContent = `מציג ${total} תערובות`;
+        infoElement.classList.remove('active');
+    } else {
+        infoElement.textContent = `מציג ${showing} מתוך ${total} תערובות`;
+        infoElement.classList.add('active');
+    }
 }
 
 // ==================== INITIALIZATION ====================
@@ -1599,7 +1677,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initTimePicker();
     setupTimeInputClickHandlers();
     
-    // Initialize blends list
+    // Initialize blends list and filter
+    populateBlendFilter();
     loadBlendsList();
     
     console.log('☕ Coffee Roaster Tracker initialized successfully!');
