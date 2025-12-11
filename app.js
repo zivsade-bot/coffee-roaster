@@ -939,10 +939,15 @@ function switchTab(tab) {
         document.getElementById('newRoastTab').classList.add('active');
         // Update UI based on edit mode
         updateEditModeUI();
-    } else {
+    } else if (tab === 'history') {
         tabs[1].classList.add('active');
         document.getElementById('historyTab').classList.add('active');
+        populateBeanFilter(); // Populate filter dropdown
         loadRoastHistory();
+    } else if (tab === 'blends') {
+        tabs[2].classList.add('active');
+        document.getElementById('blendsTab').classList.add('active');
+        loadBlendsList();
     }
 }
 
@@ -1248,6 +1253,326 @@ function setupTimeInputClickHandlers() {
     });
 }
 
+// ==================== BLENDS MANAGEMENT ====================
+
+// Global state for blend editing
+let editingBlendId = null;
+
+// Load blends from storage
+function loadBlends() {
+    return Storage.get('blends', []);
+}
+
+// Save blends to storage
+function saveBlends(blends) {
+    return Storage.set('blends', blends);
+}
+
+// Open blend modal (for new or edit)
+function openBlendModal(blendId = null) {
+    const modal = document.getElementById('blendModal');
+    const title = document.getElementById('blendModalTitle');
+    
+    if (blendId) {
+        // Edit mode
+        editingBlendId = blendId;
+        title.textContent = '✏️ ערוך תערובת';
+        loadBlendForEdit(blendId);
+    } else {
+        // New blend mode
+        editingBlendId = null;
+        title.textContent = '➕ תערובת חדשה';
+        document.getElementById('blendName').value = '';
+        document.getElementById('blendDescription').value = '';
+        document.getElementById('blendBeanCount').value = '3';
+    }
+    
+    updateBlendBeanFields();
+    modal.classList.add('active');
+}
+
+// Close blend modal
+function closeBlendModal() {
+    const modal = document.getElementById('blendModal');
+    modal.classList.remove('active');
+    editingBlendId = null;
+    
+    // Clear form
+    document.getElementById('blendName').value = '';
+    document.getElementById('blendDescription').value = '';
+    document.getElementById('blendBeanCount').value = '3';
+    updateBlendBeanFields();
+}
+
+// Update bean fields based on count
+function updateBlendBeanFields() {
+    const count = parseInt(document.getElementById('blendBeanCount').value);
+    const container = document.getElementById('blendBeansContainer');
+    const beans = loadBeansList();
+    
+    container.innerHTML = '';
+    
+    for (let i = 0; i < count; i++) {
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'blend-bean-field';
+        fieldDiv.innerHTML = `
+            <div class="blend-bean-field-title">── פול ${i + 1} ──</div>
+            <div class="form-group">
+                <label>בחר פול</label>
+                <select id="blendBean${i}" class="blend-bean-select" style="width: 100%;">
+                    <option value="">-- בחר פול --</option>
+                    ${beans.map(bean => `<option value="${escapeHtml(bean)}">${escapeHtml(bean)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>אחוז מהתערובת</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" id="blendPercentage${i}" class="blend-percentage-input" 
+                           min="0" max="100" step="1" value="0" 
+                           oninput="updateTotalPercentage()">
+                    <span style="font-size: 20px; font-weight: 600;">%</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(fieldDiv);
+    }
+    
+    updateTotalPercentage();
+}
+
+// Update total percentage and validation
+function updateTotalPercentage() {
+    const count = parseInt(document.getElementById('blendBeanCount').value);
+    let total = 0;
+    
+    for (let i = 0; i < count; i++) {
+        const percentInput = document.getElementById(`blendPercentage${i}`);
+        if (percentInput) {
+            total += parseFloat(percentInput.value) || 0;
+        }
+    }
+    
+    const totalDisplay = document.getElementById('totalPercentage');
+    const totalContainer = document.getElementById('blendPercentageTotal');
+    const saveBtn = document.getElementById('saveBlendBtn');
+    
+    totalDisplay.textContent = total.toFixed(0);
+    
+    // Update styling based on validity
+    totalContainer.classList.remove('valid', 'invalid');
+    
+    if (total === 100) {
+        totalContainer.classList.add('valid');
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+        saveBtn.style.cursor = 'pointer';
+    } else {
+        totalContainer.classList.add('invalid');
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+        saveBtn.style.cursor = 'not-allowed';
+        
+        // Add warning message
+        if (total < 100) {
+            totalDisplay.textContent += ` ⚠️ חסרים ${(100 - total).toFixed(0)}%`;
+        } else {
+            totalDisplay.textContent += ` ⚠️ עודף ${(total - 100).toFixed(0)}%`;
+        }
+    }
+}
+
+// Save blend
+function saveBlend() {
+    const name = document.getElementById('blendName').value.trim();
+    const description = document.getElementById('blendDescription').value.trim();
+    const count = parseInt(document.getElementById('blendBeanCount').value);
+    
+    // Validate name
+    if (!name) {
+        alert('❌ נא להזין שם לתערובת');
+        return;
+    }
+    
+    // Collect components
+    const components = [];
+    let totalPercentage = 0;
+    
+    for (let i = 0; i < count; i++) {
+        const beanSelect = document.getElementById(`blendBean${i}`);
+        const percentageInput = document.getElementById(`blendPercentage${i}`);
+        
+        const bean = beanSelect.value;
+        const percentage = parseFloat(percentageInput.value) || 0;
+        
+        if (bean && percentage > 0) {
+            components.push({
+                bean: bean,
+                percentage: percentage
+            });
+            totalPercentage += percentage;
+        }
+    }
+    
+    // Validate components
+    if (components.length === 0) {
+        alert('❌ נא לבחור לפחות פול אחד');
+        return;
+    }
+    
+    // Validate total percentage
+    if (totalPercentage !== 100) {
+        alert(`❌ סכום האחוזים חייב להיות 100%\nכרגע: ${totalPercentage}%`);
+        return;
+    }
+    
+    // Create blend object
+    const blend = {
+        name: name,
+        description: description,
+        components: components,
+        timestamp: new Date().toISOString()
+    };
+    
+    const blends = loadBlends();
+    
+    if (editingBlendId) {
+        // Update existing blend
+        const index = blends.findIndex(b => b.id === editingBlendId);
+        if (index !== -1) {
+            blend.id = editingBlendId;
+            blend.createdAt = blends[index].createdAt;
+            blends[index] = blend;
+            
+            if (saveBlends(blends)) {
+                alert('✅ התערובת עודכנה בהצלחה!');
+                closeBlendModal();
+                loadBlendsList();
+            }
+        }
+    } else {
+        // Create new blend
+        blend.id = Date.now();
+        blend.createdAt = blend.timestamp;
+        blends.push(blend);
+        
+        if (saveBlends(blends)) {
+            alert('✅ התערובת נשמרה בהצלחה!');
+            closeBlendModal();
+            loadBlendsList();
+        }
+    }
+}
+
+// Load blend for editing
+function loadBlendForEdit(id) {
+    const blends = loadBlends();
+    const blend = blends.find(b => b.id === id);
+    
+    if (!blend) {
+        alert('❌ תערובת לא נמצאה');
+        return;
+    }
+    
+    document.getElementById('blendName').value = blend.name;
+    document.getElementById('blendDescription').value = blend.description || '';
+    document.getElementById('blendBeanCount').value = blend.components.length;
+    
+    updateBlendBeanFields();
+    
+    // Wait for fields to be created, then fill them
+    setTimeout(() => {
+        blend.components.forEach((component, index) => {
+            const beanSelect = document.getElementById(`blendBean${index}`);
+            const percentageInput = document.getElementById(`blendPercentage${index}`);
+            
+            if (beanSelect) beanSelect.value = component.bean;
+            if (percentageInput) percentageInput.value = component.percentage;
+        });
+        
+        updateTotalPercentage();
+    }, 100);
+}
+
+// Duplicate blend
+function duplicateBlend(id) {
+    const blends = loadBlends();
+    const blend = blends.find(b => b.id === id);
+    
+    if (!blend) {
+        alert('❌ תערובת לא נמצאה');
+        return;
+    }
+    
+    const newBlend = {
+        ...blend,
+        id: Date.now(),
+        name: blend.name + ' (עותק)',
+        timestamp: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+    };
+    
+    blends.push(newBlend);
+    
+    if (saveBlends(blends)) {
+        alert('✅ התערובת שוכפלה בהצלחה!');
+        loadBlendsList();
+    }
+}
+
+// Delete blend
+function deleteBlend(id) {
+    if (!confirm('האם אתה בטוח שברצונך למחוק תערובת זו?')) {
+        return;
+    }
+    
+    let blends = loadBlends();
+    blends = blends.filter(b => b.id !== id);
+    
+    if (saveBlends(blends)) {
+        alert('✅ התערובת נמחקה');
+        loadBlendsList();
+    }
+}
+
+// Load and display blends list
+function loadBlendsList() {
+    const blends = loadBlends();
+    const container = document.getElementById('blendsList');
+    
+    if (blends.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#999; padding:40px;">אין תערובות שמורות עדיין<br>לחץ על "תערובת חדשה" ליצירת התערובת הראשונה! ☕</p>';
+        return;
+    }
+    
+    // Sort by newest first
+    const sortedBlends = [...blends].reverse();
+    
+    container.innerHTML = sortedBlends.map(blend => {
+        const componentsHtml = blend.components
+            .map(c => `<div class="blend-component">${escapeHtml(c.bean)} ${c.percentage}%</div>`)
+            .join('');
+        
+        return `
+            <div class="blend-item">
+                <div class="blend-header">
+                    <div>
+                        <div class="blend-name">${escapeHtml(blend.name)}</div>
+                        ${blend.description ? `<div class="blend-description">${escapeHtml(blend.description)}</div>` : ''}
+                    </div>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button class="delete-btn" style="background: #2196F3;" onclick="duplicateBlend(${blend.id})" title="שכפל תערובת">🔄</button>
+                        <button class="delete-btn" style="background: #4CAF50;" onclick="openBlendModal(${blend.id})" title="ערוך תערובת">✏️</button>
+                        <button class="delete-btn" onclick="deleteBlend(${blend.id})" title="מחק תערובת">🗑️</button>
+                    </div>
+                </div>
+                <div class="blend-composition">
+                    ${componentsHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 // ==================== INITIALIZATION ====================
 
 // Initialize app on page load
@@ -1273,6 +1598,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize time picker
     initTimePicker();
     setupTimeInputClickHandlers();
+    
+    // Initialize blends list
+    loadBlendsList();
     
     console.log('☕ Coffee Roaster Tracker initialized successfully!');
 });
