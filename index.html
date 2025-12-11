@@ -969,6 +969,18 @@
             <div class="card">
                 <div class="section-title">תערובות הקפה שלי</div>
                 
+                <!-- Filter Section -->
+                <div class="filter-section" style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">🔍 סנן לפי תערובת:</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <select id="blendFilter" class="bean-filter-select" onchange="filterBlendsByName()">
+                            <option value="">כל התערובות</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="resetBlendFilter()" style="padding: 10px 20px; white-space: nowrap;">הכל</button>
+                    </div>
+                    <div id="blendFilterInfo" class="filter-info"></div>
+                </div>
+                
                 <button class="btn btn-primary" onclick="openBlendModal()">➕ תערובת חדשה</button>
                 
                 <div class="blends-list" id="blendsList">
