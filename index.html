@@ -235,13 +235,17 @@
             border-radius: 10px;
             margin-bottom: 10px;
             border: 2px solid #e0e0e0;
-            cursor: pointer;
             transition: all 0.3s;
         }
 
         .roast-item:hover {
             border-color: #667eea;
-            transform: translateX(-5px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .roast-item.expanded {
+            border-color: #667eea;
+            background: #f8f9fa;
         }
 
         .roast-header {
@@ -249,6 +253,121 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .roast-name {
+            font-weight: 600;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .roast-date {
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* Compact view - summary line */
+        .roast-summary {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .roast-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .roast-summary-label {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .roast-summary-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Full details - hidden by default */
+        .roast-details {
+            display: none;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.8;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+        }
+
+        .roast-item.expanded .roast-details {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .roast-details-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .roast-details-row:last-child {
+            border-bottom: none;
+        }
+
+        .roast-details-label {
+            color: #999;
+            font-weight: 500;
+        }
+
+        .roast-details-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .roast-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .close-details-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .close-details-btn:hover {
+            background: #5568d3;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 1000px;
+            }
         }
 
         .roast-name {
@@ -713,6 +832,57 @@
             border: 2px solid #dc3545;
         }
 
+        /* Calculator Styles */
+        .calc-result-item {
+            padding: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .calc-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .calc-result-item:hover {
+            background: #f8f9fa;
+        }
+
+        .calc-result-bean {
+            flex: 1;
+        }
+
+        .calc-result-bean-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .calc-result-bean-percentage {
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .calc-result-weight {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            text-align: left;
+        }
+
+        .calc-result-total {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -740,6 +910,7 @@
             <button class="tab active" onclick="switchTab('new')">קלייה חדשה</button>
             <button class="tab" onclick="switchTab('history')">היסטוריה</button>
             <button class="tab" onclick="switchTab('blends')">תערובות</button>
+            <button class="tab" onclick="switchTab('calculator')">חישוב כמויות</button>
         </div>
 
         <div id="newRoastTab" class="tab-content active">
@@ -955,7 +1126,10 @@
                     <div id="filterInfo" class="filter-info"></div>
                 </div>
                 
+                <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleImportFile(event)">
+                
                 <button class="btn btn-secondary" onclick="exportToExcel()">📊 ייצא לאקסל</button>
+                <button class="btn btn-primary" onclick="document.getElementById('importFileInput').click()" style="background: #4CAF50;">📥 ייבא מאקסל</button>
                 <button class="btn btn-danger" onclick="clearAllData()">🗑️ נקה היסטוריה</button>
                 
                 <div class="roast-list" id="roastList">
@@ -985,6 +1159,54 @@
                 
                 <div class="blends-list" id="blendsList">
                     <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculator Tab -->
+        <div id="calculatorTab" class="tab-content">
+            <div class="card">
+                <div class="section-title">🧮 חישוב כמויות לתערובת</div>
+                
+                <div style="max-width: 600px; margin: 0 auto;">
+                    <!-- Blend Selection -->
+                    <div class="form-group">
+                        <label>בחר תערובת</label>
+                        <select id="calcBlendSelect" style="width: 100%;" onchange="updateCalcBlendInfo()">
+                            <option value="">-- בחר תערובת --</option>
+                        </select>
+                    </div>
+
+                    <!-- Blend Info Display -->
+                    <div id="calcBlendInfo" style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none;">
+                        <div style="font-weight: 600; color: #667eea; margin-bottom: 10px; font-size: 18px;" id="calcBlendName"></div>
+                        <div id="calcBlendComponents" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                        <div id="calcBlendDescription" style="font-size: 14px; color: #666; font-style: italic;"></div>
+                    </div>
+
+                    <!-- Weight Input -->
+                    <div class="form-group">
+                        <label>משקל כולל (גרם ירוק)</label>
+                        <input type="number" id="calcTotalWeight" placeholder="1000" min="1" step="1" style="width: 100%; font-size: 18px; font-weight: 600;">
+                    </div>
+
+                    <!-- Calculate Button -->
+                    <button class="btn btn-primary" onclick="calculateAmounts()" style="width: 100%; padding: 15px; font-size: 18px;">
+                        🧮 חשב כמויות
+                    </button>
+
+                    <!-- Results Display -->
+                    <div id="calcResults" style="margin-top: 30px; display: none;">
+                        <div style="font-size: 20px; font-weight: 700; color: #333; margin-bottom: 20px; text-align: center;">
+                            📊 תוצאות החישוב
+                        </div>
+                        
+                        <div id="calcResultsList" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
