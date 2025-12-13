@@ -1241,10 +1241,17 @@ function initTimePicker() {
         minutesWheel.innerHTML += '<div class="time-picker-item">&nbsp;</div>';
     }
     
-    // Create seconds wheel (0-59)
-    for (let i = 0; i < paddingCount; i++) {
-        secondsWheel.innerHTML += '<div class="time-picker-item">&nbsp;</div>';
+    // Create seconds wheel (0-59) with CIRCULAR SCROLLING
+    // Add last few seconds at the beginning for wrap-around effect
+    for (let i = 50; i <= 59; i++) {
+        const item = document.createElement('div');
+        item.className = 'time-picker-item time-picker-duplicate';
+        item.textContent = i.toString().padStart(2, '0');
+        item.dataset.value = i;
+        secondsWheel.appendChild(item);
     }
+    
+    // Main seconds (0-59)
     for (let i = 0; i <= 59; i++) {
         const item = document.createElement('div');
         item.className = 'time-picker-item';
@@ -1252,26 +1259,82 @@ function initTimePicker() {
         item.dataset.value = i;
         secondsWheel.appendChild(item);
     }
-    for (let i = 0; i < paddingCount; i++) {
-        secondsWheel.innerHTML += '<div class="time-picker-item">&nbsp;</div>';
+    
+    // Add first few seconds at the end for wrap-around effect
+    for (let i = 0; i <= 9; i++) {
+        const item = document.createElement('div');
+        item.className = 'time-picker-item time-picker-duplicate';
+        item.textContent = i.toString().padStart(2, '0');
+        item.dataset.value = i;
+        secondsWheel.appendChild(item);
     }
     
     // Setup scroll handlers
-    setupWheelScrollHandler(minutesWheel);
-    setupWheelScrollHandler(secondsWheel);
+    setupWheelScrollHandler(minutesWheel, false); // Minutes - not circular
+    setupWheelScrollHandler(secondsWheel, true);  // Seconds - circular!
 }
 
 // Setup wheel scroll handler
-function setupWheelScrollHandler(wheel) {
+function setupWheelScrollHandler(wheel, isCircular = false) {
     let scrollTimeout;
     
     wheel.addEventListener('scroll', () => {
         clearTimeout(scrollTimeout);
+        
+        // FASTER SCROLLING - reduced from 50ms to 20ms!
         scrollTimeout = setTimeout(() => {
             snapToCenter(wheel);
             updateSelectedItems();
-        }, 50);
+            
+            // Handle circular scrolling for seconds
+            if (isCircular) {
+                handleCircularScroll(wheel);
+            }
+        }, 20); // Changed from 50 to 20 - much faster!
     });
+}
+
+// Handle circular scrolling - jump to real values when reaching duplicates
+function handleCircularScroll(wheel) {
+    const items = Array.from(wheel.querySelectorAll('.time-picker-item[data-value]'));
+    const wheelRect = wheel.getBoundingClientRect();
+    const wheelCenter = wheelRect.top + wheelRect.height / 2;
+    
+    let closestItem = items[0];
+    let closestDistance = Infinity;
+    let closestIndex = 0;
+    
+    items.forEach((item, index) => {
+        const itemRect = item.getBoundingClientRect();
+        const itemCenter = itemRect.top + itemRect.height / 2;
+        const distance = Math.abs(wheelCenter - itemCenter);
+        
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestItem = item;
+            closestIndex = index;
+        }
+    });
+    
+    // Check if we're in the duplicate zones
+    const isDuplicate = closestItem && closestItem.classList.contains('time-picker-duplicate');
+    
+    if (isDuplicate) {
+        const value = parseInt(closestItem.dataset.value);
+        
+        // Find the corresponding "real" item (not duplicate)
+        const realItems = items.filter(item => 
+            !item.classList.contains('time-picker-duplicate') && 
+            parseInt(item.dataset.value) === value
+        );
+        
+        if (realItems.length > 0) {
+            // Jump to the real item seamlessly
+            setTimeout(() => {
+                realItems[0].scrollIntoView({ behavior: 'auto', block: 'center' });
+            }, 100);
+        }
+    }
 }
 
 // Snap wheel to nearest item
