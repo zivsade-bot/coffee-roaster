@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Coffee Roaster">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#6F4E37">
     <meta name="description" content="אפליקציה מקצועית לתיעוד קליות קפה">
     
     <!-- PWA Links -->
@@ -28,7 +28,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #F5E6D3;
             min-height: 100vh;
             padding: 20px;
             padding-bottom: 80px;
@@ -71,7 +71,7 @@
         }
 
         .install-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #6F4E37;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -79,6 +79,10 @@
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
+        }
+
+        .install-btn:hover {
+            background: #5D4037;
         }
 
         .close-banner {
@@ -96,11 +100,11 @@
         }
 
         h1 {
-            color: white;
+            color: #3E2723;
             text-align: center;
             margin-bottom: 30px;
             font-size: 28px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            text-shadow: 2px 2px 4px rgba(209, 165, 116, 0.3);
         }
 
         .card {
@@ -114,7 +118,7 @@
         .section-title {
             font-size: 18px;
             font-weight: 600;
-            color: #667eea;
+            color: #6F4E37;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #e0e0e0;
@@ -150,7 +154,7 @@
 
         input:focus, select:focus, textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #6F4E37;
         }
 
         input[readonly] {
@@ -185,7 +189,7 @@
 
         .calculated-value {
             font-weight: 600;
-            color: #667eea;
+            color: #6F4E37;
         }
 
         .btn {
@@ -201,22 +205,22 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6F4E37 0%, #8B6F47 100%);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(111, 78, 55, 0.4);
         }
 
         .btn-secondary {
-            background: #4CAF50;
+            background: #8B6F47;
             color: white;
         }
 
         .btn-secondary:hover {
-            background: #45a049;
+            background: #6F5B3A;
             transform: translateY(-2px);
         }
 
@@ -239,12 +243,12 @@
         }
 
         .roast-item:hover {
-            border-color: #667eea;
+            border-color: #6F4E37;
             box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
         }
 
         .roast-item.expanded {
-            border-color: #667eea;
+            border-color: #6F4E37;
             background: #f8f9fa;
         }
 
@@ -264,7 +268,7 @@
 
         .roast-date {
             font-size: 14px;
-            color: #667eea;
+            color: #6F4E37;
             font-weight: 600;
         }
 
@@ -344,7 +348,7 @@
         }
 
         .close-details-btn {
-            background: #667eea;
+            background: #6F4E37;
             color: white;
             border: none;
             padding: 8px 16px;
@@ -418,7 +422,7 @@
 
         .tab.active {
             background: white;
-            color: #667eea;
+            color: #6F4E37;
         }
 
         .tab-content {
@@ -475,7 +479,7 @@
         .modal-title {
             font-size: 24px;
             font-weight: 600;
-            color: #667eea;
+            color: #6F4E37;
         }
 
         .close-btn {
@@ -521,7 +525,7 @@
         }
 
         .btn-add-small {
-            background: #4CAF50;
+            background: #D4A574;
             color: white;
             width: 100%;
             padding: 10px;
@@ -581,7 +585,7 @@
         }
 
         .time-picker-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6F4E37 0%, #8B6F47 100%);
             color: white;
             padding: 20px;
             text-align: center;
@@ -631,7 +635,7 @@
         }
 
         .time-picker-item.selected {
-            color: #667eea;
+            color: #6F4E37;
             font-size: 28px;
             font-weight: 700;
         }
@@ -644,8 +648,8 @@
             height: 40px;
             transform: translateY(-50%);
             background: rgba(102, 126, 234, 0.1);
-            border-top: 2px solid #667eea;
-            border-bottom: 2px solid #667eea;
+            border-top: 2px solid #6F4E37;
+            border-bottom: 2px solid #6F4E37;
             pointer-events: none;
             z-index: 1;
         }
@@ -661,7 +665,7 @@
         .time-picker-separator {
             font-size: 32px;
             font-weight: 700;
-            color: #667eea;
+            color: #6F4E37;
             padding: 0 10px;
             align-self: center;
             margin-bottom: 20px;
@@ -694,7 +698,7 @@
         }
 
         .time-picker-btn-ok {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6F4E37 0%, #8B6F47 100%);
             color: white;
         }
 
@@ -723,7 +727,7 @@
 
         .bean-filter-select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #6F4E37;
         }
 
         .filter-info {
@@ -734,7 +738,7 @@
         }
 
         .filter-info.active {
-            color: #667eea;
+            color: #6F4E37;
             font-weight: 600;
         }
 
@@ -786,7 +790,7 @@
         }
 
         .blend-component {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6F4E37 0%, #8B6F47 100%);
             color: white;
             padding: 8px 15px;
             border-radius: 20px;
@@ -804,7 +808,7 @@
 
         .blend-bean-field-title {
             font-weight: 600;
-            color: #667eea;
+            color: #6F4E37;
             margin-bottom: 10px;
             font-size: 16px;
         }
@@ -863,19 +867,19 @@
 
         .calc-result-bean-percentage {
             font-size: 14px;
-            color: #667eea;
+            color: #6F4E37;
             font-weight: 600;
         }
 
         .calc-result-weight {
             font-size: 24px;
             font-weight: 700;
-            color: #667eea;
+            color: #6F4E37;
             text-align: left;
         }
 
         .calc-result-total {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6F4E37 0%, #8B6F47 100%);
             color: white;
             padding: 20px;
             text-align: center;
@@ -921,7 +925,7 @@
                     <label>תאריך קלייה</label>
                     <div style="display: flex; gap: 10px;">
                         <input type="date" id="roastDate" style="flex: 1;">
-                        <button type="button" onclick="setTodayDate()" style="padding: 12px 20px; background: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap;">📅 היום</button>
+                        <button type="button" onclick="setTodayDate()" style="padding: 12px 20px; background: #D4A574; color: white; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap;">📅 היום</button>
                     </div>
                 </div>
 
@@ -931,7 +935,7 @@
                         <select id="beanNameSelect" style="flex: 1;" onchange="handleBeanSelection()">
                             <option value="">-- בחר פול --</option>
                         </select>
-                        <button type="button" onclick="openBeanManager()" style="padding: 12px 20px; background: #667eea; color: white; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap;">⚙️ ניהול</button>
+                        <button type="button" onclick="openBeanManager()" style="padding: 12px 20px; background: #6F4E37; color: white; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap;">⚙️ ניהול</button>
                     </div>
                     <input type="text" id="beanNameCustom" placeholder="הכנס שם פול מותאם אישית..." style="display: none; margin-top: 10px;">
                 </div>
@@ -1129,7 +1133,7 @@
                 <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleImportFile(event)">
                 
                 <button class="btn btn-secondary" onclick="exportToExcel()">📊 ייצא לאקסל</button>
-                <button class="btn btn-primary" onclick="document.getElementById('importFileInput').click()" style="background: #4CAF50;">📥 ייבא מאקסל</button>
+                <button class="btn btn-primary" onclick="document.getElementById('importFileInput').click()" style="background: #D4A574;">📥 ייבא מאקסל</button>
                 <button class="btn btn-danger" onclick="clearAllData()">🗑️ נקה היסטוריה</button>
                 
                 <div class="roast-list" id="roastList">
@@ -1179,7 +1183,7 @@
 
                     <!-- Blend Info Display -->
                     <div id="calcBlendInfo" style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none;">
-                        <div style="font-weight: 600; color: #667eea; margin-bottom: 10px; font-size: 18px;" id="calcBlendName"></div>
+                        <div style="font-weight: 600; color: #6F4E37; margin-bottom: 10px; font-size: 18px;" id="calcBlendName"></div>
                         <div id="calcBlendComponents" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
                             <!-- Will be populated by JavaScript -->
                         </div>
