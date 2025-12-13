@@ -713,7 +713,7 @@ function loadRoastHistory(filterBean = null) {
         return;
     }
 
-    // Create a copy and reverse it to show newest first (FIXED)
+    // Create a copy and reverse it to show newest first
     let sortedRoasts = [...roasts].reverse();
     
     // Apply filter if specified
@@ -730,6 +730,7 @@ function loadRoastHistory(filterBean = null) {
     }
     
     listContainer.innerHTML = sortedRoasts.map(roast => {
+        // Format date
         let displayDate;
         if (roast.date && roast.date.length === 10) {
             displayDate = new Date(roast.date + 'T00:00:00').toLocaleDateString('en-GB');
@@ -737,42 +738,94 @@ function loadRoastHistory(filterBean = null) {
             displayDate = new Date(roast.date).toLocaleDateString('en-GB');
         }
         
-        const saveTime = roast.timestamp ? 
-            new Date(roast.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+        // Build compact summary
+        const summaryItems = [
+            { label: 'איבוד', value: `${escapeHtml(roast.lossPercent)}%` },
+            { label: 'זמן', value: escapeHtml(roast.coolingTPTime || '-') },
+            { label: 'טמפ הזנה', value: `${escapeHtml(roast.chargeTemp || '-')}°C` },
+            { label: 'טמפ פינאל', value: `${escapeHtml(roast.finalTemp)}°C` }
+        ];
         
-        let detailsHtml = `
-            Weight: ${escapeHtml(roast.greenWeight)}g → ${escapeHtml(roast.roastedWeight)}g (${escapeHtml(roast.lossPercent)}%)<br>
-            Total time: ${escapeHtml(roast.coolingTPTime) || '-'}<br>
-            Final temp: ${escapeHtml(roast.finalTemp)}°C
-        `;
+        const summaryHtml = summaryItems.map(item => `
+            <div class="roast-summary-item">
+                <span class="roast-summary-label">${item.label}:</span>
+                <span class="roast-summary-value">${item.value}</span>
+            </div>
+        `).join('');
         
+        // Build full details (hidden by default)
+        const detailsRows = [
+            { label: 'משקל ירוק', value: `${escapeHtml(roast.greenWeight)}g` },
+            { label: 'משקל קלוי', value: `${escapeHtml(roast.roastedWeight)}g` },
+            { label: 'איבוד משקל', value: `${escapeHtml(roast.lossPercent)}%` },
+            { label: 'טמפרטורת הזנה', value: `${escapeHtml(roast.chargeTemp || '-')}°C` },
+            { label: 'Turning Point', value: escapeHtml(roast.turningPointTime || '-') },
+            { label: 'First Crack', value: escapeHtml(roast.firstCrackTime || '-') },
+            { label: 'Development Time', value: escapeHtml(roast.developmentTime || '-') },
+            { label: 'Cooling to TP', value: escapeHtml(roast.coolingTPTime || '-') },
+            { label: 'טמפרטורה סופית', value: `${escapeHtml(roast.finalTemp)}°C` }
+        ];
+        
+        let detailsHtml = detailsRows.map(row => `
+            <div class="roast-details-row">
+                <span class="roast-details-label">${row.label}</span>
+                <span class="roast-details-value">${row.value}</span>
+            </div>
+        `).join('');
+        
+        // Add notes if exist
         if (roast.roastPlan) {
-            detailsHtml += `<br><br><strong>תכנון:</strong><br><div style="direction: rtl; white-space: pre-wrap;">${escapeHtml(roast.roastPlan)}</div>`;
+            detailsHtml += `
+                <div class="roast-details-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="roast-details-label">תכנון:</span>
+                    <div style="direction: rtl; white-space: pre-wrap; padding-top: 5px; color: #333;">${escapeHtml(roast.roastPlan)}</div>
+                </div>
+            `;
         }
         
         if (roast.roastNotes) {
-            detailsHtml += `<br><strong>הערות:</strong><br><div style="direction: rtl; white-space: pre-wrap;">${escapeHtml(roast.roastNotes)}</div>`;
+            detailsHtml += `
+                <div class="roast-details-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="roast-details-label">הערות:</span>
+                    <div style="direction: rtl; white-space: pre-wrap; padding-top: 5px; color: #333;">${escapeHtml(roast.roastNotes)}</div>
+                </div>
+            `;
         }
         
         return `
-            <div class="roast-item">
-                <div class="roast-header">
+            <div class="roast-item" id="roast-${roast.id}">
+                <div class="roast-header" onclick="toggleRoastDetails(${roast.id})">
                     <div>
                         <div class="roast-name">${escapeHtml(roast.beanName)}</div>
-                        <div class="roast-date">${displayDate}${saveTime ? ' • Saved ' + saveTime : ''}</div>
                     </div>
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                        <button class="delete-btn" style="background: #2196F3;" onclick="duplicateRoast(${roast.id})" title="שכפל קלייה">🔄</button>
-                        <button class="delete-btn" style="background: #4CAF50;" onclick="loadRoastForEdit(${roast.id})" title="ערוך קלייה">✏️</button>
-                        <button class="delete-btn" onclick="deleteRoast(${roast.id})" title="מחק קלייה">🗑️</button>
-                    </div>
+                    <div class="roast-date">${displayDate}</div>
                 </div>
+                
+                <div class="roast-summary" onclick="toggleRoastDetails(${roast.id})">
+                    ${summaryHtml}
+                </div>
+                
                 <div class="roast-details">
                     ${detailsHtml}
+                    <button class="close-details-btn" onclick="event.stopPropagation(); toggleRoastDetails(${roast.id})">✖️ סגור</button>
+                </div>
+                
+                <div class="roast-actions">
+                    <button class="delete-btn" style="background: #2196F3;" onclick="event.stopPropagation(); duplicateRoast(${roast.id})" title="שכפל קלייה">🔄</button>
+                    <button class="delete-btn" style="background: #4CAF50;" onclick="event.stopPropagation(); loadRoastForEdit(${roast.id})" title="ערוך קלייה">✏️</button>
+                    <button class="delete-btn" onclick="event.stopPropagation(); deleteRoast(${roast.id})" title="מחק קלייה">🗑️</button>
                 </div>
             </div>
         `;
     }).join('');
+}
+
+// Toggle roast details expansion
+function toggleRoastDetails(roastId) {
+    const roastElement = document.getElementById(`roast-${roastId}`);
+    if (roastElement) {
+        roastElement.classList.toggle('expanded');
+    }
 }
 
 // Populate bean filter dropdown with unique bean names
@@ -918,6 +971,168 @@ function exportToExcel() {
     XLSX.writeFile(wb, fileName);
 }
 
+// Import roasts from Excel
+function handleImportFile(event) {
+    const file = event.target.files[0];
+    
+    if (!file) {
+        return;
+    }
+    
+    // Check file type
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        alert('❌ נא לבחור קובץ Excel (.xlsx או .xls)');
+        event.target.value = ''; // Reset input
+        return;
+    }
+    
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // Get first sheet
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            
+            // Convert to JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            
+            if (jsonData.length === 0) {
+                alert('❌ הקובץ ריק או לא תקין');
+                event.target.value = '';
+                return;
+            }
+            
+            // Validate required columns
+            const firstRow = jsonData[0];
+            const requiredColumns = ['Roast Date', 'Bean Name', 'Green Weight (g)', 'Roasted Weight (g)'];
+            const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+            
+            if (missingColumns.length > 0) {
+                alert(`❌ חסרות עמודות נדרשות בקובץ:\n${missingColumns.join(', ')}\n\nנא להשתמש בקובץ שיוצא מהאפליקציה`);
+                event.target.value = '';
+                return;
+            }
+            
+            // Show confirmation
+            const confirmed = confirm(
+                `נמצאו ${jsonData.length} קליות בקובץ!\n\n` +
+                `האם לייבא?\n\n` +
+                `⚠️ כל הקליות הקיימות יימחקו\n` +
+                `✅ ${jsonData.length} קליות חדשות ייכנסו`
+            );
+            
+            if (!confirmed) {
+                event.target.value = '';
+                return;
+            }
+            
+            // Convert Excel data to roasts format
+            const importedRoasts = jsonData.map((row, index) => {
+                // Parse date - handle both formats
+                let roastDate;
+                if (typeof row['Roast Date'] === 'number') {
+                    // Excel date number
+                    const excelDate = new Date((row['Roast Date'] - 25569) * 86400 * 1000);
+                    roastDate = excelDate.toISOString().split('T')[0];
+                } else {
+                    roastDate = row['Roast Date'];
+                }
+                
+                return {
+                    id: Date.now() + index, // Generate unique IDs
+                    timestamp: new Date().toISOString(),
+                    date: roastDate,
+                    beanName: row['Bean Name'] || '',
+                    envTemp: row['Env Temp (°C)'] || '',
+                    chargeTemp: row['Charge Temp (°C)'] || '',
+                    finalTemp: row['Final Temp (°C)'] || '',
+                    greenWeight: row['Green Weight (g)'] || '',
+                    roastedWeight: row['Roasted Weight (g)'] || '',
+                    lossPercent: row['Loss (%)'] || '',
+                    tpTime: row['TP Time'] || '',
+                    tpTemp: row['TP Temp (°C)'] || '',
+                    dryEndTime: row['Dry End Time'] || '',
+                    dryEndTemp: row['Dry End Temp (°C)'] || '',
+                    final2Time: row['Final-2 Time'] || '',
+                    final2Temp: row['Final-2 Temp (°C)'] || '',
+                    final1Time: row['Final-1 Time'] || '',
+                    final1Temp: row['Final-1 Temp (°C)'] || '',
+                    finalTime: row['Final Time'] || '',
+                    finalTempPoint: row['Final Temp Point (°C)'] || '',
+                    fcsTime: row['1Cs Time'] || '',
+                    fcsTemp: row['1Cs Temp (°C)'] || '',
+                    fceTime: row['1Ce Time'] || '',
+                    fceTemp: row['1Ce Temp (°C)'] || '',
+                    coolingStartTime: row['Cooling Start Time'] || '',
+                    coolingStartTemp: row['Cooling Start Temp (°C)'] || '',
+                    coolingTPTime: row['Cooling TP Time'] || '',
+                    coolingTPTemp: row['Cooling TP Temp (°C)'] || '',
+                    roastPlan: row['Roast Plan'] || '',
+                    roastNotes: row['Roast Notes'] || '',
+                    // Calculated fields
+                    turningPointTime: row['TP Time'] || '',
+                    firstCrackTime: row['1Cs Time'] || '',
+                    developmentTime: calculateDevelopmentTime(row['1Cs Time'], row['Cooling TP Time'])
+                };
+            });
+            
+            // Save to storage (replaces existing data)
+            if (Storage.set('roasts', importedRoasts)) {
+                alert(`✅ הייבוא הושלם בהצלחה!\n\n${importedRoasts.length} קליות יובאו מהקובץ`);
+                
+                // Refresh UI
+                populateBeanFilter();
+                loadRoastHistory();
+            } else {
+                alert('❌ שגיאה בשמירת הנתונים');
+            }
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            alert(`❌ שגיאה בקריאת הקובץ:\n${error.message}\n\nנא לוודא שהקובץ תקין`);
+        }
+        
+        // Reset file input
+        event.target.value = '';
+    };
+    
+    reader.onerror = function() {
+        alert('❌ שגיאה בקריאת הקובץ');
+        event.target.value = '';
+    };
+    
+    reader.readAsArrayBuffer(file);
+}
+
+// Helper function to calculate development time
+function calculateDevelopmentTime(firstCrackTime, coolingTPTime) {
+    if (!firstCrackTime || !coolingTPTime) return '';
+    
+    try {
+        const fc = parseTimeToSeconds(firstCrackTime);
+        const cooling = parseTimeToSeconds(coolingTPTime);
+        const devSeconds = cooling - fc;
+        
+        if (devSeconds < 0) return '';
+        
+        const minutes = Math.floor(devSeconds / 60);
+        const seconds = devSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    } catch {
+        return '';
+    }
+}
+
+// Helper to parse time string to seconds
+function parseTimeToSeconds(timeStr) {
+    const parts = timeStr.split(':');
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
 // ==================== UI FUNCTIONS ====================
 
 // Set today's date
@@ -949,6 +1164,10 @@ function switchTab(tab) {
         document.getElementById('blendsTab').classList.add('active');
         populateBlendFilter(); // Populate filter dropdown
         loadBlendsList();
+    } else if (tab === 'calculator') {
+        tabs[3].classList.add('active');
+        document.getElementById('calculatorTab').classList.add('active');
+        populateCalcBlendSelect(); // Populate blend dropdown
     }
 }
 
@@ -1448,6 +1667,7 @@ function saveBlend() {
                 alert('✅ התערובת עודכנה בהצלחה!');
                 closeBlendModal();
                 populateBlendFilter();
+                populateCalcBlendSelect();
                 loadBlendsList();
             }
         }
@@ -1461,6 +1681,7 @@ function saveBlend() {
             alert('✅ התערובת נשמרה בהצלחה!');
             closeBlendModal();
             populateBlendFilter();
+            populateCalcBlendSelect();
             loadBlendsList();
         }
     }
@@ -1519,6 +1740,7 @@ function duplicateBlend(id) {
     if (saveBlends(blends)) {
         alert('✅ התערובת שוכפלה בהצלחה!');
         populateBlendFilter();
+        populateCalcBlendSelect();
         loadBlendsList();
     }
 }
@@ -1535,6 +1757,7 @@ function deleteBlend(id) {
     if (saveBlends(blends)) {
         alert('✅ התערובת נמחקה');
         populateBlendFilter();
+        populateCalcBlendSelect();
         const filterSelect = document.getElementById('blendFilter');
         const currentFilter = filterSelect ? filterSelect.value : '';
         loadBlendsList(currentFilter || null);
@@ -1651,6 +1874,146 @@ function updateBlendFilterInfo(showing, total) {
     }
 }
 
+// ==================== CALCULATOR ====================
+
+// Populate calculator blend dropdown
+function populateCalcBlendSelect() {
+    const blends = loadBlends();
+    const select = document.getElementById('calcBlendSelect');
+    
+    if (!select) return;
+    
+    // Clear existing options except first
+    select.innerHTML = '<option value="">-- בחר תערובת --</option>';
+    
+    // Add blend options (sorted alphabetically)
+    const sortedBlends = [...blends].sort((a, b) => a.name.localeCompare(b.name));
+    
+    sortedBlends.forEach(blend => {
+        const option = document.createElement('option');
+        option.value = blend.id;
+        option.textContent = blend.name;
+        select.appendChild(option);
+    });
+}
+
+// Update blend info display when selection changes
+function updateCalcBlendInfo() {
+    const select = document.getElementById('calcBlendSelect');
+    const blendId = parseInt(select.value);
+    const infoDiv = document.getElementById('calcBlendInfo');
+    const resultsDiv = document.getElementById('calcResults');
+    
+    // Hide results when changing blend
+    resultsDiv.style.display = 'none';
+    
+    if (!blendId) {
+        infoDiv.style.display = 'none';
+        return;
+    }
+    
+    const blends = loadBlends();
+    const blend = blends.find(b => b.id === blendId);
+    
+    if (!blend) {
+        infoDiv.style.display = 'none';
+        return;
+    }
+    
+    // Show blend info
+    infoDiv.style.display = 'block';
+    
+    // Update blend name
+    document.getElementById('calcBlendName').textContent = blend.name;
+    
+    // Update components
+    const componentsDiv = document.getElementById('calcBlendComponents');
+    componentsDiv.innerHTML = blend.components
+        .map(c => `<div class="blend-component">${escapeHtml(c.bean)} ${c.percentage}%</div>`)
+        .join('');
+    
+    // Update description
+    const descDiv = document.getElementById('calcBlendDescription');
+    descDiv.textContent = blend.description || '';
+    descDiv.style.display = blend.description ? 'block' : 'none';
+}
+
+// Calculate amounts for selected blend
+function calculateAmounts() {
+    const select = document.getElementById('calcBlendSelect');
+    const blendId = parseInt(select.value);
+    const totalWeight = parseFloat(document.getElementById('calcTotalWeight').value);
+    
+    // Validate inputs
+    if (!blendId) {
+        alert('❌ נא לבחור תערובת');
+        return;
+    }
+    
+    if (!totalWeight || totalWeight <= 0) {
+        alert('❌ נא להזין משקל כולל תקין');
+        return;
+    }
+    
+    // Get blend
+    const blends = loadBlends();
+    const blend = blends.find(b => b.id === blendId);
+    
+    if (!blend) {
+        alert('❌ תערובת לא נמצאה');
+        return;
+    }
+    
+    // Calculate amounts
+    const results = blend.components.map(component => {
+        const amount = Math.round(totalWeight * component.percentage / 100);
+        return {
+            bean: component.bean,
+            percentage: component.percentage,
+            amount: amount
+        };
+    });
+    
+    // Calculate total (for verification)
+    const calculatedTotal = results.reduce((sum, r) => sum + r.amount, 0);
+    
+    // Display results
+    displayCalculationResults(results, calculatedTotal, totalWeight, blend.name);
+}
+
+// Display calculation results
+function displayCalculationResults(results, calculatedTotal, requestedTotal, blendName) {
+    const resultsDiv = document.getElementById('calcResults');
+    const resultsList = document.getElementById('calcResultsList');
+    
+    // Build results HTML
+    const resultsHtml = results.map(result => `
+        <div class="calc-result-item">
+            <div class="calc-result-bean">
+                <div class="calc-result-bean-name">${escapeHtml(result.bean)}</div>
+                <div class="calc-result-bean-percentage">${result.percentage}% מהתערובת</div>
+            </div>
+            <div class="calc-result-weight">${result.amount} גרם</div>
+        </div>
+    `).join('');
+    
+    // Add total
+    const totalClass = calculatedTotal === requestedTotal ? 'calc-result-total' : 'calc-result-total';
+    const totalHtml = `
+        <div class="${totalClass}">
+            סה"כ: ${calculatedTotal} גרם
+            ${calculatedTotal !== requestedTotal ? ` (מבוקש: ${requestedTotal}g)` : ''}
+            ✅
+        </div>
+    `;
+    
+    resultsList.innerHTML = resultsHtml + totalHtml;
+    
+    // Show results with animation
+    resultsDiv.style.display = 'block';
+    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 // ==================== INITIALIZATION ====================
 
 // Initialize app on page load
@@ -1680,6 +2043,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize blends list and filter
     populateBlendFilter();
     loadBlendsList();
+    
+    // Initialize calculator
+    populateCalcBlendSelect();
     
     console.log('☕ Coffee Roaster Tracker initialized successfully!');
 });
