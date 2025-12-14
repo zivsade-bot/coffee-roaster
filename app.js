@@ -651,7 +651,7 @@ function updateEditModeUI() {
     } else if (isDuplicating) {
         // Duplicate mode
         saveBtn.textContent = '💾 שמור קלייה חדשה';
-        saveBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+        saveBtn.style.background = 'linear-gradient(135deg, #8B6F47 0%, #6F5B3A 100%)';
         
         // Add cancel button if it doesn't exist
         if (!document.getElementById('cancelEditBtn')) {
@@ -671,14 +671,14 @@ function updateEditModeUI() {
             const formattedDate = duplicateSourceDate ? 
                 new Date(duplicateSourceDate + 'T00:00:00').toLocaleDateString('he-IL') : '';
             indicator.textContent = ` (שכפול מקלייה מ-${formattedDate})`;
-            indicator.style.color = '#4CAF50';
+            indicator.style.color = '#8B6F47';
             indicator.style.fontSize = '14px';
             heading.appendChild(indicator);
         }
     } else {
         // New roast mode
         saveBtn.textContent = '💾 שמור קלייה';
-        saveBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        saveBtn.style.background = 'linear-gradient(135deg, #6F4E37 0%, #8B6F47 100%)';
         
         // Remove cancel button
         const cancelBtn = document.getElementById('cancelEditBtn');
@@ -758,11 +758,54 @@ function loadRoastHistory(filterBean = null) {
             { label: 'משקל ירוק', value: `${escapeHtml(roast.greenWeight)}g` },
             { label: 'משקל קלוי', value: `${escapeHtml(roast.roastedWeight)}g` },
             { label: 'איבוד משקל', value: `${escapeHtml(roast.lossPercent)}%` },
+            { label: 'טמפרטורת סביבה', value: `${escapeHtml(roast.envTemp || '-')}°C` },
             { label: 'טמפרטורת הזנה', value: `${escapeHtml(roast.chargeTemp || '-')}°C` },
-            { label: 'Turning Point', value: escapeHtml(roast.turningPointTime || '-') },
-            { label: 'First Crack', value: escapeHtml(roast.firstCrackTime || '-') },
+            { 
+                label: 'Turning Point (TP)', 
+                value: roast.tpTime || roast.tpTemp ? 
+                    `${escapeHtml(roast.tpTime || '-')} @ ${escapeHtml(roast.tpTemp || '-')}°C` : '-'
+            },
+            { 
+                label: 'Dry End', 
+                value: roast.dryEndTime || roast.dryEndTemp ? 
+                    `${escapeHtml(roast.dryEndTime || '-')} @ ${escapeHtml(roast.dryEndTemp || '-')}°C` : '-'
+            },
+            { 
+                label: 'Final-2', 
+                value: roast.final2Time || roast.final2Temp ? 
+                    `${escapeHtml(roast.final2Time || '-')} @ ${escapeHtml(roast.final2Temp || '-')}°C` : '-'
+            },
+            { 
+                label: 'Final-1', 
+                value: roast.final1Time || roast.final1Temp ? 
+                    `${escapeHtml(roast.final1Time || '-')} @ ${escapeHtml(roast.final1Temp || '-')}°C` : '-'
+            },
+            { 
+                label: 'Final', 
+                value: roast.finalTime || roast.finalTempPoint ? 
+                    `${escapeHtml(roast.finalTime || '-')} @ ${escapeHtml(roast.finalTempPoint || '-')}°C` : '-'
+            },
+            { 
+                label: '1st Crack Start (1Cs)', 
+                value: roast.fcsTime || roast.fcsTemp ? 
+                    `${escapeHtml(roast.fcsTime || '-')} @ ${escapeHtml(roast.fcsTemp || '-')}°C` : '-'
+            },
+            { 
+                label: '1st Crack End (1Ce)', 
+                value: roast.fceTime || roast.fceTemp ? 
+                    `${escapeHtml(roast.fceTime || '-')} @ ${escapeHtml(roast.fceTemp || '-')}°C` : '-'
+            },
+            { 
+                label: 'Cooling Start', 
+                value: roast.coolingStartTime || roast.coolingStartTemp ? 
+                    `${escapeHtml(roast.coolingStartTime || '-')} @ ${escapeHtml(roast.coolingStartTemp || '-')}°C` : '-'
+            },
+            { 
+                label: 'Cooling to TP', 
+                value: roast.coolingTPTime || roast.coolingTPTemp ? 
+                    `${escapeHtml(roast.coolingTPTime || '-')} @ ${escapeHtml(roast.coolingTPTemp || '-')}°C` : '-'
+            },
             { label: 'Development Time', value: escapeHtml(roast.developmentTime || '-') },
-            { label: 'Cooling to TP', value: escapeHtml(roast.coolingTPTime || '-') },
             { label: 'טמפרטורה סופית', value: `${escapeHtml(roast.finalTemp)}°C` }
         ];
         
@@ -811,8 +854,8 @@ function loadRoastHistory(filterBean = null) {
                 </div>
                 
                 <div class="roast-actions">
-                    <button class="delete-btn" style="background: #2196F3;" onclick="event.stopPropagation(); duplicateRoast(${roast.id})" title="שכפל קלייה">🔄</button>
-                    <button class="delete-btn" style="background: #4CAF50;" onclick="event.stopPropagation(); loadRoastForEdit(${roast.id})" title="ערוך קלייה">✏️</button>
+                    <button class="delete-btn" style="background: #8B6F47;" onclick="event.stopPropagation(); duplicateRoast(${roast.id})" title="שכפל קלייה">🔄</button>
+                    <button class="delete-btn" style="background: #D4A574;" onclick="event.stopPropagation(); loadRoastForEdit(${roast.id})" title="ערוך קלייה">✏️</button>
                     <button class="delete-btn" onclick="event.stopPropagation(); deleteRoast(${roast.id})" title="מחק קלייה">🗑️</button>
                 </div>
             </div>
@@ -1242,8 +1285,8 @@ function initTimePicker() {
     }
     
     // Create seconds wheel (0-59) with CIRCULAR SCROLLING
-    // Add last few seconds at the beginning for wrap-around effect
-    for (let i = 50; i <= 59; i++) {
+    // Add more duplicates for smoother wrap-around effect
+    for (let i = 30; i <= 59; i++) {
         const item = document.createElement('div');
         item.className = 'time-picker-item time-picker-duplicate';
         item.textContent = i.toString().padStart(2, '0');
@@ -1260,8 +1303,8 @@ function initTimePicker() {
         secondsWheel.appendChild(item);
     }
     
-    // Add first few seconds at the end for wrap-around effect
-    for (let i = 0; i <= 9; i++) {
+    // Add more duplicates at the end for smoother wrap-around
+    for (let i = 0; i <= 29; i++) {
         const item = document.createElement('div');
         item.className = 'time-picker-item time-picker-duplicate';
         item.textContent = i.toString().padStart(2, '0');
@@ -1270,8 +1313,8 @@ function initTimePicker() {
     }
     
     // Setup scroll handlers
-    setupWheelScrollHandler(minutesWheel, false); // Minutes - not circular
-    setupWheelScrollHandler(secondsWheel, true);  // Seconds - circular!
+    setupWheelScrollHandler(minutesWheel); // Minutes
+    setupWheelScrollHandler(secondsWheel); // Seconds
 }
 
 // Setup wheel scroll handler
@@ -1279,62 +1322,17 @@ function setupWheelScrollHandler(wheel, isCircular = false) {
     let scrollTimeout;
     
     wheel.addEventListener('scroll', () => {
+        // Update visual feedback immediately while scrolling
+        updateSelectedItems();
+        
         clearTimeout(scrollTimeout);
         
-        // FASTER SCROLLING - reduced from 50ms to 20ms!
+        // Wait longer before snapping to allow momentum scrolling
+        // CSS scroll-snap will handle most of it
         scrollTimeout = setTimeout(() => {
-            snapToCenter(wheel);
             updateSelectedItems();
-            
-            // Handle circular scrolling for seconds
-            if (isCircular) {
-                handleCircularScroll(wheel);
-            }
-        }, 20); // Changed from 50 to 20 - much faster!
-    });
-}
-
-// Handle circular scrolling - jump to real values when reaching duplicates
-function handleCircularScroll(wheel) {
-    const items = Array.from(wheel.querySelectorAll('.time-picker-item[data-value]'));
-    const wheelRect = wheel.getBoundingClientRect();
-    const wheelCenter = wheelRect.top + wheelRect.height / 2;
-    
-    let closestItem = items[0];
-    let closestDistance = Infinity;
-    let closestIndex = 0;
-    
-    items.forEach((item, index) => {
-        const itemRect = item.getBoundingClientRect();
-        const itemCenter = itemRect.top + itemRect.height / 2;
-        const distance = Math.abs(wheelCenter - itemCenter);
-        
-        if (distance < closestDistance) {
-            closestDistance = distance;
-            closestItem = item;
-            closestIndex = index;
-        }
-    });
-    
-    // Check if we're in the duplicate zones
-    const isDuplicate = closestItem && closestItem.classList.contains('time-picker-duplicate');
-    
-    if (isDuplicate) {
-        const value = parseInt(closestItem.dataset.value);
-        
-        // Find the corresponding "real" item (not duplicate)
-        const realItems = items.filter(item => 
-            !item.classList.contains('time-picker-duplicate') && 
-            parseInt(item.dataset.value) === value
-        );
-        
-        if (realItems.length > 0) {
-            // Jump to the real item seamlessly
-            setTimeout(() => {
-                realItems[0].scrollIntoView({ behavior: 'auto', block: 'center' });
-            }, 100);
-        }
-    }
+        }, 300); // Longer timeout for momentum
+    }, { passive: true }); // Passive for better performance
 }
 
 // Snap wheel to nearest item
@@ -1363,6 +1361,65 @@ function snapToCenter(wheel) {
 }
 
 // Update selected items visual state
+// Track last selected values for haptic feedback
+const lastSelectedValues = {
+    minutesWheel: null,
+    secondsWheel: null
+};
+
+// Audio context for click sounds (create once)
+let audioContext = null;
+
+// Initialize audio context on first use
+function getAudioContext() {
+    if (!audioContext) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.log('Audio not supported');
+        }
+    }
+    return audioContext;
+}
+
+// Create click sound using Web Audio API
+function playClickSound() {
+    try {
+        const context = getAudioContext();
+        if (!context) return;
+        
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        
+        // Short, crisp click sound
+        oscillator.frequency.value = 800; // Higher frequency for click
+        oscillator.type = 'sine';
+        
+        // Very short duration for click effect
+        gainNode.gain.setValueAtTime(0.3, context.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.02);
+        
+        oscillator.start(context.currentTime);
+        oscillator.stop(context.currentTime + 0.02);
+    } catch (e) {
+        // Silently fail if audio error
+    }
+}
+
+// Vibrate for haptic feedback (mobile devices)
+function playHapticFeedback() {
+    try {
+        if (navigator.vibrate) {
+            navigator.vibrate(10); // Very short vibration
+        }
+    } catch (e) {
+        // Vibration might not be supported
+    }
+}
+
 function updateSelectedItems() {
     const minutesWheel = document.getElementById('minutesWheel');
     const secondsWheel = document.getElementById('secondsWheel');
@@ -1377,17 +1434,41 @@ function updateWheelSelection(wheel) {
     const wheelRect = wheel.getBoundingClientRect();
     const wheelCenter = wheelRect.top + wheelRect.height / 2;
     
+    let centerItem = null;
+    let centerValue = null;
+    
     items.forEach(item => {
         const itemRect = item.getBoundingClientRect();
         const itemCenter = itemRect.top + itemRect.height / 2;
         const distance = Math.abs(wheelCenter - itemCenter);
         
+        // Remove all classes first
+        item.classList.remove('selected', 'near-center');
+        
+        // Center item (within 20px)
         if (distance < 20) {
             item.classList.add('selected');
-        } else {
-            item.classList.remove('selected');
+            // Track the item in center
+            if (item.dataset.value && distance < 10) {
+                centerItem = item;
+                centerValue = item.dataset.value;
+            }
+        } 
+        // Near center items (20-60px) - for smooth gradient
+        else if (distance < 60) {
+            item.classList.add('near-center');
         }
     });
+    
+    // Play click sound and haptic when value changes
+    if (centerValue !== null) {
+        const wheelId = wheel.id;
+        if (lastSelectedValues[wheelId] !== centerValue) {
+            lastSelectedValues[wheelId] = centerValue;
+            playClickSound();
+            playHapticFeedback();
+        }
+    }
 }
 
 // Get selected value from wheel
@@ -1430,6 +1511,10 @@ function openTimePicker(inputElement) {
     const overlay = document.getElementById('timePickerOverlay');
     const minutesWheel = document.getElementById('minutesWheel');
     const secondsWheel = document.getElementById('secondsWheel');
+    
+    // Reset haptic feedback tracking
+    lastSelectedValues.minutesWheel = null;
+    lastSelectedValues.secondsWheel = null;
     
     // Parse current value or get smart default
     let currentValue = inputElement.value;
@@ -1867,8 +1952,8 @@ function loadBlendsList(filterName = null) {
                         ${blend.description ? `<div class="blend-description">${escapeHtml(blend.description)}</div>` : ''}
                     </div>
                     <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                        <button class="delete-btn" style="background: #2196F3;" onclick="duplicateBlend(${blend.id})" title="שכפל תערובת">🔄</button>
-                        <button class="delete-btn" style="background: #4CAF50;" onclick="openBlendModal(${blend.id})" title="ערוך תערובת">✏️</button>
+                        <button class="delete-btn" style="background: #8B6F47;" onclick="duplicateBlend(${blend.id})" title="שכפל תערובת">🔄</button>
+                        <button class="delete-btn" style="background: #D4A574;" onclick="openBlendModal(${blend.id})" title="ערוך תערובת">✏️</button>
                         <button class="delete-btn" onclick="deleteBlend(${blend.id})" title="מחק תערובת">🗑️</button>
                     </div>
                 </div>
