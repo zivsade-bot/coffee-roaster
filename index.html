@@ -207,6 +207,7 @@
         .btn-primary {
             background: linear-gradient(135deg, #6F4E37 0%, #8B6F47 100%);
             color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .btn-primary:hover {
@@ -217,6 +218,7 @@
         .btn-secondary {
             background: #8B6F47;
             color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .btn-secondary:hover {
@@ -225,8 +227,30 @@
         }
 
         .btn-danger {
-            background: #f44336;
+            background: #8B4513;
             color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-danger:hover {
+            background: #6F3609;
+            transform: translateY(-2px);
+        }
+        
+        /* Compact button group for history actions */
+        .history-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .history-actions .btn {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 14px;
+            margin-bottom: 0;
+            flex: 0 1 auto;
         }
 
         .roast-list {
@@ -392,7 +416,7 @@
         }
 
         .delete-btn {
-            background: #f44336;
+            background: #8B4513;
             color: white;
             border: none;
             padding: 5px 10px;
@@ -400,6 +424,11 @@
             font-size: 12px;
             cursor: pointer;
             margin-right: 10px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .delete-btn:hover {
+            background: #6F3609;
         }
 
         .tabs {
@@ -526,13 +555,23 @@
         }
 
         .btn-delete-small {
-            background: #f44336;
+            background: #8B4513;
             color: white;
+        }
+        
+        .btn-delete-small:hover {
+            background: #6F3609;
         }
 
         .btn-add-small {
             background: #D4A574;
             color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-add-small:hover {
+            background: #C49564;
+        }
             width: 100%;
             padding: 10px;
         }
@@ -946,7 +985,7 @@
                     <label>תאריך קלייה</label>
                     <div style="display: flex; gap: 10px;">
                         <input type="date" id="roastDate" style="flex: 1;">
-                        <button type="button" onclick="setTodayDate()" style="padding: 12px 20px; background: #D4A574; color: white; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap;">📅 היום</button>
+                        <button type="button" onclick="setTodayDate()" style="padding: 12px 20px; background: #D4A574; color: white; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);">📅 היום</button>
                     </div>
                 </div>
 
@@ -1153,9 +1192,11 @@
                 
                 <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleImportFile(event)">
                 
-                <button class="btn btn-secondary" onclick="exportToExcel()">📊 ייצא לאקסל</button>
-                <button class="btn btn-primary" onclick="document.getElementById('importFileInput').click()" style="background: #D4A574;">📥 ייבא מאקסל</button>
-                <button class="btn btn-danger" onclick="clearAllData()">🗑️ נקה היסטוריה</button>
+                <div class="history-actions">
+                    <button class="btn btn-secondary" onclick="exportToExcel()">📊 ייצא</button>
+                    <button class="btn btn-primary" onclick="document.getElementById('importFileInput').click()" style="background: #D4A574; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);">📥 ייבא</button>
+                    <button class="btn btn-danger" onclick="clearAllData()">🗑️ נקה</button>
+                </div>
                 
                 <div class="roast-list" id="roastList">
                     <!-- Will be populated by JavaScript -->
