@@ -411,18 +411,24 @@
         .tab {
             flex: 1;
             padding: 12px;
-            background: rgba(255,255,255,0.3);
+            background: #E5D3B3;
             border: none;
             border-radius: 10px;
-            color: white;
+            color: #5D4037;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
         }
 
+        .tab:hover {
+            background: #D4A574;
+            transform: translateY(-2px);
+        }
+
         .tab.active {
             background: white;
             color: #6F4E37;
+            box-shadow: 0 3px 10px rgba(111, 78, 55, 0.2);
         }
 
         .tab-content {
@@ -614,8 +620,12 @@
             height: 100%;
             overflow-y: scroll;
             scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
+            scroll-padding: 80px 0;
+            overscroll-behavior: contain;
+            will-change: scroll-position;
         }
 
         .time-picker-wheel-inner::-webkit-scrollbar {
@@ -629,15 +639,26 @@
             justify-content: center;
             font-size: 24px;
             font-weight: 500;
-            color: #999;
+            color: #ccc;
             scroll-snap-align: center;
-            transition: all 0.2s;
+            scroll-snap-stop: normal;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.4;
+            transform: scale(0.9);
         }
 
         .time-picker-item.selected {
             color: #6F4E37;
             font-size: 28px;
             font-weight: 700;
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        /* Items near center - partial opacity */
+        .time-picker-item.near-center {
+            opacity: 0.7;
+            transform: scale(0.95);
         }
 
         .time-picker-highlight {
