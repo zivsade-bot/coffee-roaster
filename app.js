@@ -318,12 +318,24 @@ function calculateMetrics() {
         document.getElementById('totalTime').textContent = '-';
     }
     
+    // Total Time (CS) = Cooling Start time
+    if (coolingStartTime > 0) {
+        document.getElementById('totalTimeCS').textContent = secondsToTime(coolingStartTime);
+    } else {
+        document.getElementById('totalTimeCS').textContent = '-';
+    }
+    
     // Development Time (CS) = Cooling Start - 1Cs
     if (coolingStartTime > 0 && fcsTime > 0 && fcsTime < coolingStartTime) {
         const devTimeCS = coolingStartTime - fcsTime;
         document.getElementById('devTimeCS').textContent = secondsToTime(devTimeCS);
+        
+        // DTR (CS) based on Cooling Start
+        const dtrCS = (devTimeCS / coolingStartTime * 100).toFixed(1);
+        document.getElementById('dtrCS').textContent = dtrCS + '%';
     } else {
         document.getElementById('devTimeCS').textContent = '-';
+        document.getElementById('dtrCS').textContent = '-';
     }
     
     // Development Time (CTP) = Cooling TP - 1Cs
@@ -331,7 +343,7 @@ function calculateMetrics() {
         const devTimeCTP = coolingTPTime - fcsTime;
         document.getElementById('devTimeCTP').textContent = secondsToTime(devTimeCTP);
         
-        // DTR based on CTP
+        // DTR (CTP) based on CTP
         const dtr = (devTimeCTP / coolingTPTime * 100).toFixed(1);
         document.getElementById('dtr').textContent = dtr + '%';
     } else {
@@ -390,7 +402,20 @@ function saveRoast() {
         coolingTPTime: document.getElementById('coolingTPTime').value,
         coolingTPTemp: document.getElementById('coolingTPTemp').value,
         roastPlan: document.getElementById('roastPlan').value,
-        roastNotes: document.getElementById('roastNotes').value
+        roastNotes: document.getElementById('roastNotes').value,
+        // Calculated fields
+        totalTimeCS: document.getElementById('totalTimeCS').textContent !== '-' ? 
+            document.getElementById('totalTimeCS').textContent : null,
+        totalTimeCTP: document.getElementById('totalTime').textContent !== '-' ? 
+            document.getElementById('totalTime').textContent : null,
+        devTimeCS: document.getElementById('devTimeCS').textContent !== '-' ? 
+            document.getElementById('devTimeCS').textContent : null,
+        devTimeCTP: document.getElementById('devTimeCTP').textContent !== '-' ? 
+            document.getElementById('devTimeCTP').textContent : null,
+        dtrCS: document.getElementById('dtrCS').textContent !== '-' ? 
+            document.getElementById('dtrCS').textContent : null,
+        dtrCTP: document.getElementById('dtr').textContent !== '-' ? 
+            document.getElementById('dtr').textContent : null
     };
 
     const roasts = Storage.get('roasts', []);
@@ -805,7 +830,12 @@ function loadRoastHistory(filterBean = null) {
                 value: roast.coolingTPTime || roast.coolingTPTemp ? 
                     `${escapeHtml(roast.coolingTPTime || '-')} @ ${escapeHtml(roast.coolingTPTemp || '-')}°C` : '-'
             },
-            { label: 'Development Time', value: escapeHtml(roast.developmentTime || '-') },
+            { label: 'זמן קלייה (CS)', value: escapeHtml(roast.totalTimeCS || '-') },
+            { label: 'זמן קלייה כולל (CTP)', value: escapeHtml(roast.totalTimeCTP || '-') },
+            { label: 'Development Time (CS)', value: escapeHtml(roast.devTimeCS || '-') },
+            { label: 'Development Time (CTP)', value: escapeHtml(roast.devTimeCTP || '-') },
+            { label: 'DTR (CS) %', value: escapeHtml(roast.dtrCS || '-') },
+            { label: 'DTR (CTP) %', value: escapeHtml(roast.dtrCTP || '-') },
             { label: 'טמפרטורה סופית', value: `${escapeHtml(roast.finalTemp)}°C` }
         ];
         
@@ -1331,7 +1361,7 @@ function setupWheelScrollHandler(wheel, isCircular = false) {
         // CSS scroll-snap will handle most of it
         scrollTimeout = setTimeout(() => {
             updateSelectedItems();
-        }, 300); // Longer timeout for momentum
+        }, 500); // Longer timeout for more momentum
     }, { passive: true }); // Passive for better performance
 }
 
