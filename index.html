@@ -658,7 +658,7 @@
             position: relative;
             height: 100%;
             overflow-y: scroll;
-            scroll-snap-type: y mandatory;
+            scroll-snap-type: y proximity;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
@@ -1141,8 +1141,12 @@
 
                 <div class="calculated">
                     <div class="calculated-item">
-                        <span class="calculated-label">זמן קלייה כולל:</span>
+                        <span class="calculated-label">זמן קלייה כולל (CTP):</span>
                         <span class="calculated-value" id="totalTime">-</span>
+                    </div>
+                    <div class="calculated-item">
+                        <span class="calculated-label">זמן קלייה (CS):</span>
+                        <span class="calculated-value" id="totalTimeCS">-</span>
                     </div>
                     <div class="calculated-item">
                         <span class="calculated-label">Development Time (CS):</span>
@@ -1153,8 +1157,12 @@
                         <span class="calculated-value" id="devTimeCTP">-</span>
                     </div>
                     <div class="calculated-item">
-                        <span class="calculated-label">DTR (%):</span>
+                        <span class="calculated-label">DTR (CTP) %:</span>
                         <span class="calculated-value" id="dtr">-</span>
+                    </div>
+                    <div class="calculated-item">
+                        <span class="calculated-label">DTR (CS) %:</span>
+                        <span class="calculated-value" id="dtrCS">-</span>
                     </div>
                 </div>
             </div>
