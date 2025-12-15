@@ -645,6 +645,14 @@
             justify-content: center;
             align-items: center;
             direction: ltr;
+            touch-action: pan-y;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: grab;
+        }
+        
+        .time-picker-wheels:active {
+            cursor: grabbing;
         }
 
         .time-picker-wheel {
@@ -659,12 +667,16 @@
             height: 100%;
             overflow-y: scroll;
             scroll-snap-type: y proximity;
-            scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
             scroll-padding: 80px 0;
             overscroll-behavior: contain;
             will-change: scroll-position;
+        }
+        
+        /* Disable snap while actively scrolling for maximum inertia */
+        .time-picker-wheel-inner.scrolling {
+            scroll-snap-type: none !important;
         }
 
         .time-picker-wheel-inner::-webkit-scrollbar {
