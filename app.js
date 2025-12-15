@@ -738,8 +738,12 @@ function loadRoastHistory(filterBean = null) {
         return;
     }
 
-    // Create a copy and reverse it to show newest first
-    let sortedRoasts = [...roasts].reverse();
+    // Sort by date - newest first
+    let sortedRoasts = [...roasts].sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA; // Newest first
+    });
     
     // Apply filter if specified
     if (filterBean) {
@@ -988,60 +992,107 @@ function clearAllData() {
 // Export to Excel
 function exportToExcel() {
     const roasts = Storage.get('roasts', []);
+    const beans = loadBeansList();
+    const blends = Storage.get('blends', []);
     
-    if (roasts.length === 0) {
-        alert('No data to export');
+    if (roasts.length === 0 && beans.length === 0 && blends.length === 0) {
+        alert('❌ אין נתונים לייצוא');
         return;
     }
 
-    const data = roasts.map(r => {
-        let roastDate;
-        if (r.date && r.date.length === 10) {
-            roastDate = r.date;
-        } else {
-            roastDate = new Date(r.date).toISOString().split('T')[0];
-        }
-        
-        return {
-            'Roast Date': roastDate,
-            'Saved Date': r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-GB') : new Date(r.date).toLocaleDateString('en-GB'),
-            'Saved Time': r.timestamp ? new Date(r.timestamp).toLocaleTimeString('en-GB') : new Date(r.date).toLocaleTimeString('en-GB'),
-            'Bean Name': r.beanName,
-            'Env Temp (°C)': r.envTemp,
-            'Charge Temp (°C)': r.chargeTemp,
-            'Final Temp (°C)': r.finalTemp,
-            'Green Weight (g)': r.greenWeight,
-            'Roasted Weight (g)': r.roastedWeight,
-            'Loss (%)': r.lossPercent,
-            'TP Time': r.tpTime,
-            'TP Temp (°C)': r.tpTemp,
-            'Dry End Time': r.dryEndTime,
-            'Dry End Temp (°C)': r.dryEndTemp,
-            'Final-2 Time': r.final2Time,
-            'Final-2 Temp (°C)': r.final2Temp,
-            'Final-1 Time': r.final1Time,
-            'Final-1 Temp (°C)': r.final1Temp,
-            'Final Time': r.finalTime,
-            'Final Temp Point (°C)': r.finalTempPoint,
-            '1Cs Time': r.fcsTime,
-            '1Cs Temp (°C)': r.fcsTemp,
-            '1Ce Time': r.fceTime,
-            '1Ce Temp (°C)': r.fceTemp,
-            'Cooling Start Time': r.coolingStartTime,
-            'Cooling Start Temp (°C)': r.coolingStartTemp,
-            'Cooling TP Time': r.coolingTPTime,
-            'Cooling TP Temp (°C)': r.coolingTPTemp,
-            'Roast Plan': r.roastPlan || '',
-            'Roast Notes': r.roastNotes || ''
-        };
-    });
-
-    const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Roasts');
     
-    const fileName = `coffee_roasts_${new Date().toISOString().split('T')[0]}.xlsx`;
+    // Sheet 1: Roasts
+    if (roasts.length > 0) {
+        const roastsData = roasts.map(r => {
+            let roastDate;
+            if (r.date && r.date.length === 10) {
+                roastDate = r.date;
+            } else {
+                roastDate = new Date(r.date).toISOString().split('T')[0];
+            }
+            
+            return {
+                'Roast Date': roastDate,
+                'Saved Date': r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-GB') : new Date(r.date).toLocaleDateString('en-GB'),
+                'Saved Time': r.timestamp ? new Date(r.timestamp).toLocaleTimeString('en-GB') : new Date(r.date).toLocaleTimeString('en-GB'),
+                'Bean Name': r.beanName,
+                'Env Temp (°C)': r.envTemp,
+                'Charge Temp (°C)': r.chargeTemp,
+                'Final Temp (°C)': r.finalTemp,
+                'Green Weight (g)': r.greenWeight,
+                'Roasted Weight (g)': r.roastedWeight,
+                'Loss (%)': r.lossPercent,
+                'TP Time': r.tpTime,
+                'TP Temp (°C)': r.tpTemp,
+                'Dry End Time': r.dryEndTime,
+                'Dry End Temp (°C)': r.dryEndTemp,
+                'Final-2 Time': r.final2Time,
+                'Final-2 Temp (°C)': r.final2Temp,
+                'Final-1 Time': r.final1Time,
+                'Final-1 Temp (°C)': r.final1Temp,
+                'Final Time': r.finalTime,
+                'Final Temp Point (°C)': r.finalTempPoint,
+                '1Cs Time': r.fcsTime,
+                '1Cs Temp (°C)': r.fcsTemp,
+                '1Ce Time': r.fceTime,
+                '1Ce Temp (°C)': r.fceTemp,
+                'Cooling Start Time': r.coolingStartTime,
+                'Cooling Start Temp (°C)': r.coolingStartTemp,
+                'Cooling TP Time': r.coolingTPTime,
+                'Cooling TP Temp (°C)': r.coolingTPTemp,
+                'Total Time (CS)': r.totalTimeCS || '',
+                'Total Time (CTP)': r.totalTimeCTP || '',
+                'Dev Time (CS)': r.devTimeCS || '',
+                'Dev Time (CTP)': r.devTimeCTP || '',
+                'DTR (CS) %': r.dtrCS || '',
+                'DTR (CTP) %': r.dtrCTP || '',
+                'Roast Plan': r.roastPlan || '',
+                'Roast Notes': r.roastNotes || ''
+            };
+        });
+        
+        const wsRoasts = XLSX.utils.json_to_sheet(roastsData);
+        XLSX.utils.book_append_sheet(wb, wsRoasts, 'Roasts');
+    }
+    
+    // Sheet 2: Beans
+    if (beans.length > 0) {
+        const beansData = beans.map((bean, index) => ({
+            'No.': index + 1,
+            'Bean Name': bean
+        }));
+        
+        const wsBeans = XLSX.utils.json_to_sheet(beansData);
+        XLSX.utils.book_append_sheet(wb, wsBeans, 'Beans');
+    }
+    
+    // Sheet 3: Blends
+    if (blends.length > 0) {
+        const blendsData = blends.map(blend => {
+            const row = {
+                'Blend Name': blend.name,
+                'Description': blend.description || '',
+                'Total Beans': blend.beans.length
+            };
+            
+            // Add each bean as a column
+            blend.beans.forEach((bean, index) => {
+                row[`Bean ${index + 1} Name`] = bean.name;
+                row[`Bean ${index + 1} %`] = bean.percentage;
+            });
+            
+            return row;
+        });
+        
+        const wsBlends = XLSX.utils.json_to_sheet(blendsData);
+        XLSX.utils.book_append_sheet(wb, wsBlends, 'Blends');
+    }
+    
+    const fileName = `coffee_backup_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
+    
+    alert(`✅ ייצוא הושלם בהצלחה!\n\n📊 קליות: ${roasts.length}\n☕ פולים: ${beans.length}\n🎨 תערובות: ${blends.length}`);
 }
 
 // Import roasts from Excel
@@ -1066,100 +1117,187 @@ function handleImportFile(event) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
             
-            // Get first sheet
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
+            let importedRoasts = [];
+            let importedBeans = [];
+            let importedBlends = [];
+            let roastsCount = 0, beansCount = 0, blendsCount = 0;
             
-            // Convert to JSON
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
-            
-            if (jsonData.length === 0) {
-                alert('❌ הקובץ ריק או לא תקין');
-                event.target.value = '';
-                return;
+            // Import Sheet 1: Roasts
+            if (workbook.SheetNames.includes('Roasts')) {
+                const worksheet = workbook.Sheets['Roasts'];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (jsonData.length > 0) {
+                    // Validate required columns
+                    const firstRow = jsonData[0];
+                    const requiredColumns = ['Roast Date', 'Bean Name', 'Green Weight (g)', 'Roasted Weight (g)'];
+                    const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+                    
+                    if (missingColumns.length > 0) {
+                        alert(`❌ חסרות עמודות נדרשות ב-sheet Roasts:\n${missingColumns.join(', ')}\n\nנא להשתמש בקובץ שיוצא מהאפליקציה`);
+                        event.target.value = '';
+                        return;
+                    }
+                    
+                    // Convert Excel data to roasts format
+                    importedRoasts = jsonData.map((row, index) => {
+                        // Parse date - handle both formats
+                        let roastDate;
+                        if (typeof row['Roast Date'] === 'number') {
+                            // Excel date number
+                            const excelDate = new Date((row['Roast Date'] - 25569) * 86400 * 1000);
+                            roastDate = excelDate.toISOString().split('T')[0];
+                        } else {
+                            roastDate = row['Roast Date'];
+                        }
+                        
+                        return {
+                            id: Date.now() + index, // Generate unique IDs
+                            timestamp: new Date().toISOString(),
+                            date: roastDate,
+                            beanName: row['Bean Name'] || '',
+                            envTemp: row['Env Temp (°C)'] || '',
+                            chargeTemp: row['Charge Temp (°C)'] || '',
+                            finalTemp: row['Final Temp (°C)'] || '',
+                            greenWeight: row['Green Weight (g)'] || '',
+                            roastedWeight: row['Roasted Weight (g)'] || '',
+                            lossPercent: row['Loss (%)'] || '',
+                            tpTime: row['TP Time'] || '',
+                            tpTemp: row['TP Temp (°C)'] || '',
+                            dryEndTime: row['Dry End Time'] || '',
+                            dryEndTemp: row['Dry End Temp (°C)'] || '',
+                            final2Time: row['Final-2 Time'] || '',
+                            final2Temp: row['Final-2 Temp (°C)'] || '',
+                            final1Time: row['Final-1 Time'] || '',
+                            final1Temp: row['Final-1 Temp (°C)'] || '',
+                            finalTime: row['Final Time'] || '',
+                            finalTempPoint: row['Final Temp Point (°C)'] || '',
+                            fcsTime: row['1Cs Time'] || '',
+                            fcsTemp: row['1Cs Temp (°C)'] || '',
+                            fceTime: row['1Ce Time'] || '',
+                            fceTemp: row['1Ce Temp (°C)'] || '',
+                            coolingStartTime: row['Cooling Start Time'] || '',
+                            coolingStartTemp: row['Cooling Start Temp (°C)'] || '',
+                            coolingTPTime: row['Cooling TP Time'] || '',
+                            coolingTPTemp: row['Cooling TP Temp (°C)'] || '',
+                            roastPlan: row['Roast Plan'] || '',
+                            roastNotes: row['Roast Notes'] || '',
+                            // Calculated fields
+                            totalTimeCS: row['Total Time (CS)'] || '',
+                            totalTimeCTP: row['Total Time (CTP)'] || '',
+                            devTimeCS: row['Dev Time (CS)'] || '',
+                            devTimeCTP: row['Dev Time (CTP)'] || '',
+                            dtrCS: row['DTR (CS) %'] || '',
+                            dtrCTP: row['DTR (CTP) %'] || '',
+                            turningPointTime: row['TP Time'] || '',
+                            firstCrackTime: row['1Cs Time'] || '',
+                            developmentTime: calculateDevelopmentTime(row['1Cs Time'], row['Cooling TP Time'])
+                        };
+                    });
+                    
+                    roastsCount = importedRoasts.length;
+                }
             }
             
-            // Validate required columns
-            const firstRow = jsonData[0];
-            const requiredColumns = ['Roast Date', 'Bean Name', 'Green Weight (g)', 'Roasted Weight (g)'];
-            const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+            // Import Sheet 2: Beans
+            if (workbook.SheetNames.includes('Beans')) {
+                const worksheet = workbook.Sheets['Beans'];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (jsonData.length > 0) {
+                    importedBeans = jsonData.map(row => row['Bean Name']).filter(name => name && name.trim() !== '');
+                    beansCount = importedBeans.length;
+                }
+            }
             
-            if (missingColumns.length > 0) {
-                alert(`❌ חסרות עמודות נדרשות בקובץ:\n${missingColumns.join(', ')}\n\nנא להשתמש בקובץ שיוצא מהאפליקציה`);
+            // Import Sheet 3: Blends
+            if (workbook.SheetNames.includes('Blends')) {
+                const worksheet = workbook.Sheets['Blends'];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (jsonData.length > 0) {
+                    importedBlends = jsonData.map((row, index) => {
+                        const beans = [];
+                        const totalBeans = row['Total Beans'] || 0;
+                        
+                        // Extract beans from columns
+                        for (let i = 1; i <= totalBeans; i++) {
+                            const beanName = row[`Bean ${i} Name`];
+                            const beanPercentage = row[`Bean ${i} %`];
+                            
+                            if (beanName && beanPercentage) {
+                                beans.push({
+                                    name: beanName,
+                                    percentage: parseFloat(beanPercentage)
+                                });
+                            }
+                        }
+                        
+                        return {
+                            id: Date.now() + index,
+                            name: row['Blend Name'] || '',
+                            description: row['Description'] || '',
+                            beans: beans
+                        };
+                    }).filter(blend => blend.name && blend.beans.length > 0);
+                    
+                    blendsCount = importedBlends.length;
+                }
+            }
+            
+            // Check if any data was found
+            if (roastsCount === 0 && beansCount === 0 && blendsCount === 0) {
+                alert('❌ לא נמצאו נתונים תקינים בקובץ');
                 event.target.value = '';
                 return;
             }
             
             // Show confirmation
-            const confirmed = confirm(
-                `נמצאו ${jsonData.length} קליות בקובץ!\n\n` +
+            const confirmMessage = 
+                `נמצאו בקובץ:\n` +
+                `📊 קליות: ${roastsCount}\n` +
+                `☕ פולים: ${beansCount}\n` +
+                `🎨 תערובות: ${blendsCount}\n\n` +
                 `האם לייבא?\n\n` +
-                `⚠️ כל הקליות הקיימות יימחקו\n` +
-                `✅ ${jsonData.length} קליות חדשות ייכנסו`
-            );
+                `⚠️ כל הנתונים הקיימים יימחקו`;
+            
+            const confirmed = confirm(confirmMessage);
             
             if (!confirmed) {
                 event.target.value = '';
                 return;
             }
             
-            // Convert Excel data to roasts format
-            const importedRoasts = jsonData.map((row, index) => {
-                // Parse date - handle both formats
-                let roastDate;
-                if (typeof row['Roast Date'] === 'number') {
-                    // Excel date number
-                    const excelDate = new Date((row['Roast Date'] - 25569) * 86400 * 1000);
-                    roastDate = excelDate.toISOString().split('T')[0];
-                } else {
-                    roastDate = row['Roast Date'];
-                }
-                
-                return {
-                    id: Date.now() + index, // Generate unique IDs
-                    timestamp: new Date().toISOString(),
-                    date: roastDate,
-                    beanName: row['Bean Name'] || '',
-                    envTemp: row['Env Temp (°C)'] || '',
-                    chargeTemp: row['Charge Temp (°C)'] || '',
-                    finalTemp: row['Final Temp (°C)'] || '',
-                    greenWeight: row['Green Weight (g)'] || '',
-                    roastedWeight: row['Roasted Weight (g)'] || '',
-                    lossPercent: row['Loss (%)'] || '',
-                    tpTime: row['TP Time'] || '',
-                    tpTemp: row['TP Temp (°C)'] || '',
-                    dryEndTime: row['Dry End Time'] || '',
-                    dryEndTemp: row['Dry End Temp (°C)'] || '',
-                    final2Time: row['Final-2 Time'] || '',
-                    final2Temp: row['Final-2 Temp (°C)'] || '',
-                    final1Time: row['Final-1 Time'] || '',
-                    final1Temp: row['Final-1 Temp (°C)'] || '',
-                    finalTime: row['Final Time'] || '',
-                    finalTempPoint: row['Final Temp Point (°C)'] || '',
-                    fcsTime: row['1Cs Time'] || '',
-                    fcsTemp: row['1Cs Temp (°C)'] || '',
-                    fceTime: row['1Ce Time'] || '',
-                    fceTemp: row['1Ce Temp (°C)'] || '',
-                    coolingStartTime: row['Cooling Start Time'] || '',
-                    coolingStartTemp: row['Cooling Start Temp (°C)'] || '',
-                    coolingTPTime: row['Cooling TP Time'] || '',
-                    coolingTPTemp: row['Cooling TP Temp (°C)'] || '',
-                    roastPlan: row['Roast Plan'] || '',
-                    roastNotes: row['Roast Notes'] || '',
-                    // Calculated fields
-                    turningPointTime: row['TP Time'] || '',
-                    firstCrackTime: row['1Cs Time'] || '',
-                    developmentTime: calculateDevelopmentTime(row['1Cs Time'], row['Cooling TP Time'])
-                };
-            });
-            
             // Save to storage (replaces existing data)
-            if (Storage.set('roasts', importedRoasts)) {
-                alert(`✅ הייבוא הושלם בהצלחה!\n\n${importedRoasts.length} קליות יובאו מהקובץ`);
+            let success = true;
+            
+            if (roastsCount > 0) {
+                success = success && Storage.set('roasts', importedRoasts);
+            }
+            
+            if (beansCount > 0) {
+                success = success && saveBeansList(importedBeans);
+            }
+            
+            if (blendsCount > 0) {
+                success = success && Storage.set('blends', importedBlends);
+            }
+            
+            if (success) {
+                alert(
+                    `✅ הייבוא הושלם בהצלחה!\n\n` +
+                    `📊 קליות: ${roastsCount}\n` +
+                    `☕ פולים: ${beansCount}\n` +
+                    `🎨 תערובות: ${blendsCount}`
+                );
                 
                 // Refresh UI
+                updateBeansDatalist();
                 populateBeanFilter();
                 loadRoastHistory();
+                populateBlendFilter();
+                loadBlends();
+                populateCalcBlendSelect();
             } else {
                 alert('❌ שגיאה בשמירת הנתונים');
             }
@@ -1177,6 +1315,7 @@ function handleImportFile(event) {
         alert('❌ שגיאה בקריאת הקובץ');
         event.target.value = '';
     };
+    
     
     reader.readAsArrayBuffer(file);
 }
