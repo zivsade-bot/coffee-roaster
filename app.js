@@ -962,7 +962,402 @@ function updateFilterInfo(showing, total) {
     }
 }
 
-// Delete roast
+// Advanced Filter Functions
+
+// Toggle advanced filter panel
+function toggleAdvancedFilter() {
+    const panel = document.getElementById('advancedFilterPanel');
+    const button = document.querySelector('.advanced-filter-toggle');
+    
+    if (panel.classList.contains('show')) {
+        panel.classList.remove('show');
+        button.classList.remove('active');
+    } else {
+        panel.classList.add('show');
+        button.classList.add('active');
+        populateBeanCheckboxes();
+    }
+}
+
+// Populate bean checkboxes
+function populateBeanCheckboxes() {
+    const roasts = Storage.get('roasts', []);
+    const beans = [...new Set(roasts.map(r => r.beanName))].filter(b => b).sort();
+    
+    const container = document.getElementById('beanCheckboxes');
+    if (!container) return;
+    
+    container.innerHTML = beans.map(bean => `
+        <div class="filter-checkbox-item">
+            <input type="checkbox" id="bean_${escapeHtml(bean)}" value="${escapeHtml(bean)}" onchange="updateFilterCount()">
+            <label for="bean_${escapeHtml(bean)}">${escapeHtml(bean)}</label>
+        </div>
+    `).join('');
+}
+
+// Select all beans
+function selectAllBeans() {
+    const checkboxes = document.querySelectorAll('#beanCheckboxes input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = true);
+    updateFilterCount();
+}
+
+// Clear all beans
+function clearAllBeans() {
+    const checkboxes = document.querySelectorAll('#beanCheckboxes input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = false);
+    updateFilterCount();
+}
+
+// Set date preset
+function setDatePreset(preset) {
+    const today = new Date();
+    const dateFrom = document.getElementById('filterDateFrom');
+    const dateTo = document.getElementById('filterDateTo');
+    
+    dateTo.value = today.toISOString().split('T')[0];
+    
+    switch(preset) {
+        case 'week':
+            const weekAgo = new Date(today);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            dateFrom.value = weekAgo.toISOString().split('T')[0];
+            break;
+        case 'month':
+            const monthAgo = new Date(today);
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            dateFrom.value = monthAgo.toISOString().split('T')[0];
+            break;
+        case '3months':
+            const threeMonthsAgo = new Date(today);
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            dateFrom.value = threeMonthsAgo.toISOString().split('T')[0];
+            break;
+        case 'year':
+            const yearAgo = new Date(today);
+            yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+            dateFrom.value = yearAgo.toISOString().split('T')[0];
+            break;
+        case 'all':
+            dateFrom.value = '';
+            dateTo.value = '';
+            break;
+    }
+    
+    updateFilterCount();
+}
+
+// Update filter count
+function updateFilterCount() {
+    let count = 0;
+    
+    // Check beans
+    const selectedBeans = Array.from(document.querySelectorAll('#beanCheckboxes input:checked'));
+    if (selectedBeans.length > 0) count++;
+    
+    // Check date range
+    if (document.getElementById('filterDateFrom').value || document.getElementById('filterDateTo').value) count++;
+    
+    // Check temp ranges
+    if (document.getElementById('filterEnvTempMin').value || document.getElementById('filterEnvTempMax').value) count++;
+    if (document.getElementById('filterChargeTempMin').value || document.getElementById('filterChargeTempMax').value) count++;
+    if (document.getElementById('filterFinalTempMin').value || document.getElementById('filterFinalTempMax').value) count++;
+    
+    // Check DTR ranges
+    if (document.getElementById('filterDtrCsMin').value || document.getElementById('filterDtrCsMax').value) count++;
+    if (document.getElementById('filterDtrCtpMin').value || document.getElementById('filterDtrCtpMax').value) count++;
+    
+    // Check weight ranges
+    if (document.getElementById('filterGreenWeightMin').value || document.getElementById('filterGreenWeightMax').value) count++;
+    if (document.getElementById('filterLossPercentMin').value || document.getElementById('filterLossPercentMax').value) count++;
+    
+    // Check search text
+    if (document.getElementById('filterSearchText').value.trim()) count++;
+    
+    // Update indicator
+    const indicator = document.getElementById('filterActiveIndicator');
+    const countSpan = document.getElementById('filterActiveCount');
+    
+    if (count > 0) {
+        indicator.classList.add('show');
+        countSpan.textContent = count;
+    } else {
+        indicator.classList.remove('show');
+    }
+}
+
+// Apply advanced filter
+function applyAdvancedFilter() {
+    const filters = {
+        beans: Array.from(document.querySelectorAll('#beanCheckboxes input:checked')).map(cb => cb.value),
+        dateFrom: document.getElementById('filterDateFrom').value,
+        dateTo: document.getElementById('filterDateTo').value,
+        envTempMin: parseFloat(document.getElementById('filterEnvTempMin').value) || null,
+        envTempMax: parseFloat(document.getElementById('filterEnvTempMax').value) || null,
+        chargeTempMin: parseFloat(document.getElementById('filterChargeTempMin').value) || null,
+        chargeTempMax: parseFloat(document.getElementById('filterChargeTempMax').value) || null,
+        finalTempMin: parseFloat(document.getElementById('filterFinalTempMin').value) || null,
+        finalTempMax: parseFloat(document.getElementById('filterFinalTempMax').value) || null,
+        dtrCsMin: parseFloat(document.getElementById('filterDtrCsMin').value) || null,
+        dtrCsMax: parseFloat(document.getElementById('filterDtrCsMax').value) || null,
+        dtrCtpMin: parseFloat(document.getElementById('filterDtrCtpMin').value) || null,
+        dtrCtpMax: parseFloat(document.getElementById('filterDtrCtpMax').value) || null,
+        greenWeightMin: parseFloat(document.getElementById('filterGreenWeightMin').value) || null,
+        greenWeightMax: parseFloat(document.getElementById('filterGreenWeightMax').value) || null,
+        lossPercentMin: parseFloat(document.getElementById('filterLossPercentMin').value) || null,
+        lossPercentMax: parseFloat(document.getElementById('filterLossPercentMax').value) || null,
+        searchText: document.getElementById('filterSearchText').value.trim().toLowerCase(),
+        sortBy: document.getElementById('filterSortBy').value
+    };
+    
+    loadRoastHistoryAdvanced(filters);
+    
+    // Close panel
+    const panel = document.getElementById('advancedFilterPanel');
+    const button = document.querySelector('.advanced-filter-toggle');
+    panel.classList.remove('show');
+    button.classList.remove('active');
+}
+
+// Reset advanced filter
+function resetAdvancedFilter() {
+    // Clear all checkboxes
+    document.querySelectorAll('#beanCheckboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+    
+    // Clear date inputs
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    
+    // Clear temp inputs
+    document.getElementById('filterEnvTempMin').value = '';
+    document.getElementById('filterEnvTempMax').value = '';
+    document.getElementById('filterChargeTempMin').value = '';
+    document.getElementById('filterChargeTempMax').value = '';
+    document.getElementById('filterFinalTempMin').value = '';
+    document.getElementById('filterFinalTempMax').value = '';
+    
+    // Clear DTR inputs
+    document.getElementById('filterDtrCsMin').value = '';
+    document.getElementById('filterDtrCsMax').value = '';
+    document.getElementById('filterDtrCtpMin').value = '';
+    document.getElementById('filterDtrCtpMax').value = '';
+    
+    // Clear weight inputs
+    document.getElementById('filterGreenWeightMin').value = '';
+    document.getElementById('filterGreenWeightMax').value = '';
+    document.getElementById('filterLossPercentMin').value = '';
+    document.getElementById('filterLossPercentMax').value = '';
+    
+    // Clear search text
+    document.getElementById('filterSearchText').value = '';
+    
+    // Reset sort
+    document.getElementById('filterSortBy').value = 'date-desc';
+    
+    updateFilterCount();
+    loadRoastHistory();
+}
+
+// Load roast history with advanced filters
+function loadRoastHistoryAdvanced(filters) {
+    let roasts = Storage.get('roasts', []);
+    const listContainer = document.getElementById('roastList');
+    const totalRoasts = roasts.length;
+    
+    if (roasts.length === 0) {
+        listContainer.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No saved roasts</p>';
+        return;
+    }
+    
+    // Apply filters
+    let filteredRoasts = roasts.filter(roast => {
+        // Bean filter
+        if (filters.beans.length > 0 && !filters.beans.includes(roast.beanName)) {
+            return false;
+        }
+        
+        // Date filter
+        if (filters.dateFrom || filters.dateTo) {
+            const roastDate = new Date(roast.date);
+            if (filters.dateFrom && roastDate < new Date(filters.dateFrom)) return false;
+            if (filters.dateTo && roastDate > new Date(filters.dateTo)) return false;
+        }
+        
+        // Env temp filter
+        if (filters.envTempMin !== null && parseFloat(roast.envTemp) < filters.envTempMin) return false;
+        if (filters.envTempMax !== null && parseFloat(roast.envTemp) > filters.envTempMax) return false;
+        
+        // Charge temp filter
+        if (filters.chargeTempMin !== null && parseFloat(roast.chargeTemp) < filters.chargeTempMin) return false;
+        if (filters.chargeTempMax !== null && parseFloat(roast.chargeTemp) > filters.chargeTempMax) return false;
+        
+        // Final temp filter
+        if (filters.finalTempMin !== null && parseFloat(roast.finalTemp) < filters.finalTempMin) return false;
+        if (filters.finalTempMax !== null && parseFloat(roast.finalTemp) > filters.finalTempMax) return false;
+        
+        // DTR CS filter
+        if (filters.dtrCsMin !== null || filters.dtrCsMax !== null) {
+            const dtrCs = parseFloat(roast.dtrCS);
+            if (isNaN(dtrCs)) return false;
+            if (filters.dtrCsMin !== null && dtrCs < filters.dtrCsMin) return false;
+            if (filters.dtrCsMax !== null && dtrCs > filters.dtrCsMax) return false;
+        }
+        
+        // DTR CTP filter
+        if (filters.dtrCtpMin !== null || filters.dtrCtpMax !== null) {
+            const dtrCtp = parseFloat(roast.dtrCTP);
+            if (isNaN(dtrCtp)) return false;
+            if (filters.dtrCtpMin !== null && dtrCtp < filters.dtrCtpMin) return false;
+            if (filters.dtrCtpMax !== null && dtrCtp > filters.dtrCtpMax) return false;
+        }
+        
+        // Green weight filter
+        if (filters.greenWeightMin !== null && parseFloat(roast.greenWeight) < filters.greenWeightMin) return false;
+        if (filters.greenWeightMax !== null && parseFloat(roast.greenWeight) > filters.greenWeightMax) return false;
+        
+        // Loss percent filter
+        if (filters.lossPercentMin !== null && parseFloat(roast.lossPercent) < filters.lossPercentMin) return false;
+        if (filters.lossPercentMax !== null && parseFloat(roast.lossPercent) > filters.lossPercentMax) return false;
+        
+        // Search text filter
+        if (filters.searchText) {
+            const searchIn = [
+                roast.beanName,
+                roast.roastPlan,
+                roast.roastNotes
+            ].join(' ').toLowerCase();
+            
+            if (!searchIn.includes(filters.searchText)) return false;
+        }
+        
+        return true;
+    });
+    
+    // Apply sorting
+    filteredRoasts.sort((a, b) => {
+        switch(filters.sortBy) {
+            case 'date-desc':
+                return new Date(b.date) - new Date(a.date);
+            case 'date-asc':
+                return new Date(a.date) - new Date(b.date);
+            case 'bean-asc':
+                return (a.beanName || '').localeCompare(b.beanName || '');
+            case 'bean-desc':
+                return (b.beanName || '').localeCompare(a.beanName || '');
+            case 'finaltemp-asc':
+                return parseFloat(a.finalTemp) - parseFloat(b.finalTemp);
+            case 'finaltemp-desc':
+                return parseFloat(b.finalTemp) - parseFloat(a.finalTemp);
+            case 'loss-asc':
+                return parseFloat(a.lossPercent) - parseFloat(b.lossPercent);
+            case 'loss-desc':
+                return parseFloat(b.lossPercent) - parseFloat(a.lossPercent);
+            case 'dtrcs-asc':
+                return parseFloat(a.dtrCS || 0) - parseFloat(b.dtrCS || 0);
+            case 'dtrcs-desc':
+                return parseFloat(b.dtrCS || 0) - parseFloat(a.dtrCS || 0);
+            default:
+                return new Date(b.date) - new Date(a.date);
+        }
+    });
+    
+    // Update indicator
+    const indicator = document.getElementById('filterActiveIndicator');
+    if (filteredRoasts.length !== totalRoasts) {
+        indicator.innerHTML = `✅ מציג ${filteredRoasts.length} מתוך ${totalRoasts} קליות`;
+        indicator.classList.add('show');
+    }
+    
+    if (filteredRoasts.length === 0) {
+        listContainer.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">לא נמצאו קליות שעונות על הקריטריונים</p>';
+        return;
+    }
+    
+    // Render roasts (using existing rendering code)
+    listContainer.innerHTML = filteredRoasts.map(roast => {
+        // Format date
+        let displayDate;
+        if (roast.date && roast.date.length === 10) {
+            displayDate = new Date(roast.date + 'T00:00:00').toLocaleDateString('en-GB');
+        } else {
+            displayDate = new Date(roast.date).toLocaleDateString('en-GB');
+        }
+        
+        // Build compact summary
+        const summaryItems = [
+            { label: 'איבוד', value: `${escapeHtml(roast.lossPercent)}%` },
+            { label: 'זמן', value: escapeHtml(roast.coolingTPTime || '-') },
+            { label: 'טמפ הזנה', value: `${escapeHtml(roast.chargeTemp || '-')}°C` },
+            { label: 'טמפ פינאל', value: `${escapeHtml(roast.finalTemp)}°C` }
+        ];
+        
+        const summaryHtml = summaryItems.map(item => `
+            <div class="roast-summary-item">
+                <span class="roast-summary-label">${item.label}:</span>
+                <span class="roast-summary-value">${item.value}</span>
+            </div>
+        `).join('');
+        
+        // Build full details with all calculated fields
+        const detailsRows = [
+            { label: 'תאריך קלייה', value: displayDate },
+            { label: 'שם הפול', value: roast.beanName },
+            { label: 'טמפ\' סביבה', value: roast.envTemp ? `${roast.envTemp}°C` : '-' },
+            { label: 'טמפ\' טעינה', value: roast.chargeTemp ? `${roast.chargeTemp}°C` : '-' },
+            { label: 'טמפ\' סופית', value: `${roast.finalTemp}°C` },
+            { label: 'משקל ירוק', value: `${roast.greenWeight}g` },
+            { label: 'משקל קלוי', value: `${roast.roastedWeight}g` },
+            { label: 'אובדן משקל', value: `${roast.lossPercent}%` },
+            { label: 'זמן קלייה (CS)', value: roast.totalTimeCS || '-' },
+            { label: 'זמן קלייה כולל (CTP)', value: roast.totalTimeCTP || '-' },
+            { label: 'Development Time (CS)', value: roast.devTimeCS || '-' },
+            { label: 'Development Time (CTP)', value: roast.devTimeCTP || '-' },
+            { label: 'DTR (CS) %', value: roast.dtrCS || '-' },
+            { label: 'DTR (CTP) %', value: roast.dtrCTP || '-' }
+        ];
+        
+        // Add time points if they exist
+        if (roast.tpTime) detailsRows.push({ label: 'Turning Point', value: `${roast.tpTime} @ ${roast.tpTemp || '-'}°C` });
+        if (roast.dryEndTime) detailsRows.push({ label: 'Dry End', value: `${roast.dryEndTime} @ ${roast.dryEndTemp || '-'}°C` });
+        if (roast.fcsTime) detailsRows.push({ label: '1st Crack Start', value: `${roast.fcsTime} @ ${roast.fcsTemp || '-'}°C` });
+        if (roast.fceTime) detailsRows.push({ label: '1st Crack End', value: `${roast.fceTime} @ ${roast.fceTemp || '-'}°C` });
+        if (roast.coolingTPTime) detailsRows.push({ label: 'Cooling TP', value: `${roast.coolingTPTime} @ ${roast.coolingTPTemp || '-'}°C` });
+        
+        // Add notes if they exist
+        if (roast.roastPlan) detailsRows.push({ label: 'תכנון', value: roast.roastPlan });
+        if (roast.roastNotes) detailsRows.push({ label: 'הערות', value: roast.roastNotes });
+        
+        const detailsHtml = detailsRows.map(row => `
+            <div class="roast-details-row">
+                <span class="roast-details-label">${row.label}:</span>
+                <span class="roast-details-value">${escapeHtml(String(row.value))}</span>
+            </div>
+        `).join('');
+        
+        return `
+            <div class="roast-item" id="roast-${roast.id}">
+                <div class="roast-header" onclick="toggleRoastDetails(${roast.id})">
+                    <div>
+                        <div class="roast-name">${escapeHtml(roast.beanName)}</div>
+                        <div class="roast-date">${displayDate}</div>
+                    </div>
+                    <button class="delete-btn" onclick="event.stopPropagation(); deleteRoast(${roast.id})">🗑️</button>
+                </div>
+                <div class="roast-summary" onclick="toggleRoastDetails(${roast.id})">
+                    ${summaryHtml}
+                </div>
+                <div class="roast-details">
+                    ${detailsHtml}
+                    <div class="roast-actions">
+                        <button class="close-details-btn" onclick="toggleRoastDetails(${roast.id})">סגור</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+
 function deleteRoast(id) {
     if (confirm('Are you sure you want to delete this roast?')) {
         let roasts = Storage.get('roasts', []);
