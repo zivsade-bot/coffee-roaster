@@ -1991,6 +1991,14 @@ function saveBlend() {
             blends[index] = blend;
             
             if (saveBlends(blends)) {
+                // Add blend name to beans list if it's a new name
+                const beans = loadBeansList();
+                if (!beans.includes(name)) {
+                    beans.push(name);
+                    saveBeansList(beans);
+                    updateBeansDatalist(); // Refresh the dropdown
+                }
+                
                 alert('✅ התערובת עודכנה בהצלחה!');
                 closeBlendModal();
                 populateBlendFilter();
@@ -2005,6 +2013,14 @@ function saveBlend() {
         blends.push(blend);
         
         if (saveBlends(blends)) {
+            // Add blend name to beans list automatically
+            const beans = loadBeansList();
+            if (!beans.includes(name)) {
+                beans.push(name);
+                saveBeansList(beans);
+                updateBeansDatalist(); // Refresh the dropdown
+            }
+            
             alert('✅ התערובת נשמרה בהצלחה!');
             closeBlendModal();
             populateBlendFilter();
